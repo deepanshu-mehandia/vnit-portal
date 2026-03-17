@@ -1,5 +1,6 @@
 venv/
 node_modules/
-__pucache__/
+__pycache__/
+*.pyc
 .next/
 .env
