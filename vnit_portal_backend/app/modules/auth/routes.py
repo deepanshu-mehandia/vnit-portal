@@ -25,9 +25,10 @@ def login(username:str,password:str):
         if not row:
             return {"error":"invalid username"}
 
-        token = create_access_token(
-            {"user_id":row[0]}
-        )
+        token = create_access_token({
+            "user_id":row[0],
+            "role":row[2]
+            })
 
         return {"token":token}
     
