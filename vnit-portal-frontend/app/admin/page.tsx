@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
+import { useRouter } from "next/navigation"
+import { isAuthenticated } from "@/lib/auth"
 import Chart from "@/components/charts"
 
 export default function AdminDashboard(){
@@ -10,7 +12,14 @@ export default function AdminDashboard(){
   const [courses, setCourses] = useState<any[]>([])
   const [recent, setRecent] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/login")
+    }
+  }, [])
+  
   useEffect(() => {
     Promise.all([
       api("/admin/stats"),
