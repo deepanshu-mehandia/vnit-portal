@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends
 from app.core.dependencies import get_current_user
 from app.database.connection import get_connection
+from app.core.dependencies import get_current_user
 
 router = APIRouter()
 
-@router.get("/students/{student_id}")
-def get_student(student_id: int, user=Depends(get_current _user)):
-    return {"msg": "Protected route works"}
+@router.get("/students/{id}")
+def get_student(id: int, user=Depends(get_current_user)):
+    return {"msg": "Protected"}
 
 def get_student(student_id:int):
 
