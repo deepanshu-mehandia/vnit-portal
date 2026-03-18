@@ -1,4 +1,12 @@
 import ThemeToggle from "./themeToggle"
+import { logout } from "@/lib/auth"
+
+<button
+  onClick={logout}
+  className="text-sm bg-red-500 text-white px-3 py-1 rounded"
+>
+  Logout
+</button>
 
 export default function Navbar() {
   return (
