@@ -8,18 +8,37 @@ const menu = [
   {name:"Student Profile",path:"/students"}
 ]
 
-export default function Sidebar(){
+export default function Sidebar() {
   return (
-    <div className="w-64 h-screen bg-gray-900 text-white p-4 space-y-4">
+    <div className="w-64 bg-gray-900 text-white p-6 hidden md:block">
 
-      <h2 className="text-xl font-bold">VNIT</h2>
+      <h2 className="text-xl font-bold mb-6">
+        VNIT
+      </h2>
 
-      <div className="space-y-2">
-        <p>Dashboard</p>
-        <p>Students</p>
-        <p>Courses</p>
-        <p>Fees</p>
-      </div>
+      <nav className="space-y-3 text-sm">
+
+        <a href="/dashboard" className="block hover:text-gray-300">
+          Dashboard
+        </a>
+
+        <a href="/students" className="block hover:text-gray-300">
+          Students
+        </a>
+
+        <a href="/registration" className="block hover:text-gray-300">
+          Registration
+        </a>
+
+        <a href="/fees" className="block hover:text-gray-300">
+          Fees
+        </a>
+
+        <a href="/admin" className="block hover:text-gray-300">
+          Admin
+        </a>
+
+      </nav>
 
     </div>
   )
