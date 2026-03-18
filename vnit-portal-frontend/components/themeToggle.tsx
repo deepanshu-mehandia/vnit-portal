@@ -8,6 +8,8 @@ export default function ThemeToggle(){
 
   return(
 
+    <ThemeToggle/>
+
     <select
       onChange={e=>setTheme(e.target.value)}
     >
