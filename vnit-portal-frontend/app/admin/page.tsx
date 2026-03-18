@@ -5,6 +5,19 @@ import { api } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { isAuthenticated } from "@/lib/auth"
 import Chart from "@/components/charts"
+import { getUserRole } from "@/lib/auth"
+
+useEffect(() => {
+
+  if (!isAuthenticated()) {
+    router.push("/login")
+  }
+
+  if (getUserRole() !== "admin") {
+    router.push("/dashboard")
+  }
+
+}, [])
 
 export default function AdminDashboard(){
 
