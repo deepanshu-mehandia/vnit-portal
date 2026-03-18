@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { api } from "@/lib/api"
 
+localStorage.setItem("token", res.access_token)
+localStorage.setItem("role", res.role)
+
 export default function Login(){
 
   const router = useRouter()
