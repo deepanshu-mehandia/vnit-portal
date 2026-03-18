@@ -9,6 +9,14 @@ import Charts from "../../components/charts"
 import Notifications from "../../components/notifications"
 import Image from "next/image"
 
+const router = useRouter()
+
+useEffect(() => {
+  if (!isAuthenticated()) {
+    router.push("/login")
+  }
+}, [])
+
 export default function Dashboard(){
 
   return(
