@@ -10,13 +10,21 @@ export default function AdminDashboard(){
   const [courses, setCourses] = useState<any[]>([])
   const [recent, setRecent] = useState<any[]>([])
 
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => {
-
-    api("/admin/stats").then(setStats)
-    api("/admin/course-popularity").then(setCourses)
-    api("/admin/recent").then(setRecent)
-
+    Promise.all([
+      api("/admin/stats"),
+      api("/admin/course-popularity"),
+      api("/admin/recent")
+    ]).then(([s, c, r]) => {
+      setStats(s)
+      setCourses(c)
+      setRecent(r)
+      setLoading(false)
+    })
   }, [])
+  if (loading) return <div>Loading...</div>
 
   return (
 
