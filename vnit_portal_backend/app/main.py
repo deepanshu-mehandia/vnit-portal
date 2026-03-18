@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.students.routes import router as student_router
 from app.modules.registration.routes import router as registration_router
@@ -28,6 +28,7 @@ app.include_router(student_router)
 app.include_router(registration_router)
 app.include_router(fee_router)
 app.include_router(hostel_router)
+app.include_router(admin_router)
 
 
 # ✅ root route
