@@ -1,21 +1,20 @@
+import ThemeToggle from "./themeToggle"
+
 export default function Navbar() {
-
   return (
+    <div className="bg-white dark:bg-gray-900 shadow px-6 py-4 flex justify-between items-center">
 
-    <div className="h-16 bg-white shadow flex items-center justify-between px-6">
+      <h1 className="text-lg font-semibold">
+        VNIT Portal
+      </h1>
 
-      <div className="text-lg font-semibold">
-        VNIT Academic Portal
-      </div>
-
-      <div className="flex gap-4">
-
-        <button>🔔</button>
-        <button>👤</button>
-
+      <div className="flex items-center gap-4">
+        <ThemeToggle />
+        <span className="text-sm text-gray-600 dark:text-gray-300">
+          Admin
+        </span>
       </div>
 
     </div>
-
-  );
+  )
 }
