@@ -1,36 +1,41 @@
-import Sidebar from "../components/sidebar";
-import Navbar from "../components/navbar";
+import Sidebar from "../components/sidebar"
+import Navbar from "../components/navbar"
 import { ThemeProvider } from "next-themes"
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en">
-      <body className="flex bg-gray-100">
+      <body>
 
-        <Sidebar />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
 
-		<div className="bg-gray-900 text-white p-4 flex justify-between">
-  			<span className="font-bold">VNIT Portal</span>
-  			<span>Admin</span>
-		</div>
+          <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-950">
 
-        <div className="flex-1">
+            {/* Sidebar */}
+            <Sidebar />
 
-          <Navbar />
+            {/* Right side */}
+            <div className="flex flex-col flex-1">
 
-          <main className="p-6">
-            <ThemeProvider attribute="class">
-  		{children}
-	    </ThemeProvider>
-          </main>
+              {/* Top Navbar */}
+              <Navbar />
 
-        </div>
+              {/* Main Content */}
+              <main className="flex-1 overflow-y-auto p-6">
+                {children}
+              </main>
+
+            </div>
+
+          </div>
+
+        </ThemeProvider>
 
       </body>
     </html>
-  );
+  )
 }
