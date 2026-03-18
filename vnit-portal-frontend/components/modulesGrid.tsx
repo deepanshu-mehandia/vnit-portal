@@ -1,48 +1,37 @@
-"use client"
-
-import { motion } from "framer-motion"
-import Link from "next/link"
+import Image from "next/image"
 
 const modules = [
-
-  {name:"Registration",path:"/registration",icon:"📘"},
-  {name:"Fees",path:"/fees",icon:"💳"},
-  {name:"Hostel",path:"/hostel",icon:"🏠"},
-  {name:"Student Profile",path:"/students",icon:"👤"},
-  {name:"Results",path:"/results",icon:"📊"},
-  {name:"Feedback",path:"/feedback",icon:"⭐"}
-
+  { name: "Examination", icon: "/assets/icons/examination.png" },
+  { name: "Registration", icon: "/assets/icons/registration.png" },
+  { name: "Fee Management", icon: "/assets/icons/fee.png" },
+  { name: "Faculty Advisor", icon: "/assets/icons/faculty.png" },
+  { name: "Hostel", icon: "/assets/icons/hostel.png" },
+  { name: "Election", icon: "/assets/icons/election.png" },
+  { name: "Feedback", icon: "/assets/icons/feedback.png" },
 ]
 
 export default function ModulesGrid(){
 
-  return(
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+      {modules.map((m, i) => (
+        <div key={i} className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow hover:shadow-lg transition">
 
-      {modules.map((module,index)=>(
+          <div className="flex items-center gap-4">
 
-        <Link key={index} href={module.path}>
+            <Image src={m.icon} alt={m.name} width={40} height={40} />
 
-          <motion.div
-            whileHover={{scale:1.05}}
-            className="bg-white shadow rounded-xl p-6 text-center cursor-pointer">
-
-            <div className="text-3xl mb-3">
-              {module.icon}
+            <div>
+              <h3 className="font-semibold">{m.name}</h3>
+              <p className="text-xs text-gray-500">Module</p>
             </div>
 
-            <h3 className="text-sm font-semibold">
-              {module.name}
-            </h3>
+          </div>
 
-          </motion.div>
-
-        </Link>
-
+        </div>
       ))}
 
     </div>
-
   )
 }
