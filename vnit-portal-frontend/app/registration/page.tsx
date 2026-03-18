@@ -9,9 +9,8 @@ export default function Registration() {
 
   useEffect(()=>{
 
-    API.get("/registration/courses/1")
-    .then(res=>{
-      setCourses(res.data)
+    await api("/registration/add?offering_id=" + id, {
+      method: "POST"
     })
 
   },[])
