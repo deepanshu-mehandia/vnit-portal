@@ -6,3 +6,7 @@ export function logout() {
   localStorage.removeItem("token")
   window.location.href = "/login"
 }
+
+export function getUserRole() {
+  return localStorage.getItem("role")
+}
