@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
+import Chart from "@/components/charts" 
 
 export default function AdminDashboard(){
 
@@ -49,12 +50,7 @@ export default function AdminDashboard(){
           Course Popularity
         </h2>
 
-        {courses.map((c, i) => (
-          <div key={i} className="flex justify-between border-b py-1">
-            <span>{c.course}</span>
-            <span>{c.count}</span>
-          </div>
-        ))}
+        <Chart data={courses} />
 
       </div>
 
