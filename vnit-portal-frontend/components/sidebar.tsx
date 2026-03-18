@@ -1,42 +1,23 @@
-import Link from "next/link"
-
-const menu = [
-  {name:"Dashboard",path:"/dashboard"},
-  {name:"Registration",path:"/registration"},
-  {name:"Fees",path:"/fees"},
-  {name:"Hostel",path:"/hostel"},
-  {name:"Student Profile",path:"/students"}
-]
+import Image from "next/image"
 
 export default function Sidebar() {
   return (
-    <div className="w-64 bg-gray-900 text-white p-6 hidden md:block">
+    <div className="w-64 bg-gray-900 text-white p-6 hidden md:flex flex-col">
 
-      <h2 className="text-xl font-bold mb-6">
-        VNIT
-      </h2>
+      {/* Logo */}
+      <div className="flex items-center gap-3 mb-8">
+        <Image src="/assets/logo.png" alt="VNIT" width={40} height={40} />
+        <span className="font-bold text-lg">VNIT Portal</span>
+      </div>
 
-      <nav className="space-y-3 text-sm">
+      {/* Menu */}
+      <nav className="space-y-4 text-sm">
 
-        <a href="/dashboard" className="block hover:text-gray-300">
-          Dashboard
-        </a>
-
-        <a href="/students" className="block hover:text-gray-300">
-          Students
-        </a>
-
-        <a href="/registration" className="block hover:text-gray-300">
-          Registration
-        </a>
-
-        <a href="/fees" className="block hover:text-gray-300">
-          Fees
-        </a>
-
-        <a href="/admin" className="block hover:text-gray-300">
-          Admin
-        </a>
+        <a href="/dashboard" className="hover:text-gray-300">Dashboard</a>
+        <a href="/registration" className="hover:text-gray-300">Registration</a>
+        <a href="/fees" className="hover:text-gray-300">Fees</a>
+        <a href="/students" className="hover:text-gray-300">Students</a>
+        <a href="/admin" className="hover:text-gray-300">Admin</a>
 
       </nav>
 
