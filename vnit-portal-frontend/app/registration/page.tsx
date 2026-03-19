@@ -17,13 +17,15 @@ export default function Registration() {
 
   const [courses,setCourses] = useState([])
 
-  useEffect(()=>{
+  useEffect(() => {
+    async function register() {
+      await api("/registration/add?offering_id=" + id, {
+        method: "POST",
+      });
+    }
 
-    await api("/registration/add?offering_id=" + id, {
-      method: "POST"
-    })
-
-  },[])
+    register();
+  }, []);
 
   return (
 
