@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"
 import { isAuthenticated } from "@/lib/auth"
-import API from "../../services/api";
+import { api } from "@/lib/api"; 
 
 const router = useRouter()
 
@@ -19,7 +19,7 @@ export default function Students() {
 
   useEffect(()=>{
 
-    API.get("/students/1")
+    api.get("/students/1")
     .then(res=>{
       setStudent(res.data)
     })
