@@ -1,13 +1,11 @@
-import oracledb
-
-DB_USER = "vnit_portal"
-DB_PASSWORD = "strongpassword"
-DB_DSN = "localhost:1521/XEPDB1"
+import psycopg2
+import os
 
 def get_connection():
-    connection = oracledb.connect(
-        user=DB_USER,
-        password=DB_PASSWORD,
-        dsn=DB_DSN
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        database=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        port=5432
     )
-    return connection
