@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"
 import { isAuthenticated } from "@/lib/auth"
-import API from "../../services/api";
+import { api } from "@/lib/api"; 
 
 const router = useRouter()
 
@@ -19,7 +19,7 @@ export default function Fees(){
 
   useEffect(()=>{
 
-    API.get("/fees/demand/1")
+    api.get("/fees/demand/1")
     .then(res=>{
       setFees(res.data)
     })
