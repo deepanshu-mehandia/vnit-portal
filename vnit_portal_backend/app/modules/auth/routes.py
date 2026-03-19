@@ -1,42 +1,33 @@
 from fastapi import APIRouter, HTTPException
 from app.database.connection import get_connection
-from app.core.security import verify_password, create_access_token
+from app.core.security import hash_password, verify_password, create_token
 
 router = APIRouter(prefix="/auth")
 
 @router.post("/login")
-def login(username: str, password: str):
+def login(data: dict):
+
+    username = data["username"]
+    password = data["password"]
 
     conn = get_connection()
     cur = conn.cursor()
 
-    try:
-        cur.execute("""
-            SELECT user_id, password_hash, role
-            FROM users
-            WHERE username = :1
-        """, [username])
+    cur.execute("SELECT user_id, password, role FROM users WHERE username=%s", (username,))
+    user = cur.fetchone()
 
-        row = cur.fetchone()
+    if not user:
+        raise HTTPException(400, "User not found")
 
-        if not row:
-            raise HTTPException(status_code=401, detail="Invalid username")
+    if not verify_password(password, user[1]):
+        raise HTTPException(400, "Invalid password")
 
-        # ✅ verify password
-        if not verify_password(password, row[1]):
-            raise HTTPException(status_code=401, detail="Wrong password")
+    token = create_token({
+        "user_id": user[0],
+        "role": user[2]
+    })
 
-        # ✅ include role in token
-        token = create_access_token({
-            "user_id": row[0],
-            "role": row[2]
-        })
-
-        return {
-            "access_token": token,
-            "role": user_role
-               }
-
-    finally:
-        cur.close()
-        conn.close()
+    return {
+        "access_token": token,
+        "role": user[2]
+    }
