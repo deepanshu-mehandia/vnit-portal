@@ -17,14 +17,18 @@ export default function Fees(){
 
   const [fees,setFees] = useState([])
 
-  useEffect(()=>{
+  useEffect(() => {
+  async function loadFees() {
+    try {
+      const res = await api("/fees/demand/1");
+      setFees(res); // ⚠️ no .data
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
-    api.get("/fees/demand/1")
-    .then(res=>{
-      setFees(res.data)
-    })
-
-  },[])
+  loadFees();
+}, []);
 
   return (
 
