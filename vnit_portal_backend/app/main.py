@@ -1,18 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.modules.admin.routes import router as admin_router
+
 from app.modules.auth.routes import router as auth_router
 from app.modules.students.routes import router as student_router
-from app.modules.registration.routes import router as registration_router
-from app.modules.fees.routes import router as fee_router
-from app.modules.hostel.routes import router as hostel_router
+from app.modules.registration.routes import router as reg_router
+from app.modules.admin.routes import router as admin_router
 
+app = FastAPI()
 
-# ✅ FIRST create app
-app = FastAPI(title="VNIT Portal API")
-
-
-# ✅ THEN add middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -21,17 +16,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# ✅ THEN include routers
 app.include_router(auth_router)
 app.include_router(student_router)
-app.include_router(registration_router)
-app.include_router(fee_router)
-app.include_router(hostel_router)
+app.include_router(reg_router)
 app.include_router(admin_router)
 
-
-# ✅ root route
 @app.get("/")
 def root():
     return {"message": "VNIT Portal API running"}
