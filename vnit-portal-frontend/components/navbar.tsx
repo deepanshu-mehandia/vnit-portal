@@ -1,3 +1,4 @@
+"use client";
 import ThemeToggle from "./themeToggle"
 import { logout } from "@/lib/auth"
 
