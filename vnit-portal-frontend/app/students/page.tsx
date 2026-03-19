@@ -1,37 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"
-import { isAuthenticated } from "@/lib/auth"
-import { api } from "@/lib/api"; 
-
-const router = useRouter()
-
-useEffect(() => {
-  if (!isAuthenticated()) {
-    router.push("/login")
-  }
-}, [])
+import { useRouter } from "next/navigation";
+import { isAuthenticated } from "@/lib/auth";
+import { api } from "@/lib/api";
 
 export default function Students() {
+  const router = useRouter();
 
-  const [student,setStudent] = useState<any>(null)
+  const [student, setStudent] = useState<any>(null);
 
-  useEffect(()=>{
+  // 🔐 auth check
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/login");
+    }
+  }, []);
 
-    api.get("/students/1")
-    .then(res=>{
-      setStudent(res.data)
-    })
+  // 📦 fetch data
+  useEffect(() => {
+    async function loadStudent() {
+      try {
+        const res = await api("/students/1"); // ✅ correct
+        setStudent(res); // ✅ no .data
+      } catch (err) {
+        console.error(err);
+      }
+    }
 
-  },[])
+    loadStudent();
+  }, []);
 
-  if(!student) return <div>Loading...</div>
+  if (!student) return <div>Loading...</div>;
 
   return (
-
     <div className="bg-white p-6 rounded shadow">
-
       <h2 className="text-xl font-bold mb-4">
         Student Profile
       </h2>
@@ -39,8 +42,6 @@ export default function Students() {
       <p>Name: {student.name}</p>
       <p>Email: {student.email}</p>
       <p>Mobile: {student.mobile}</p>
-
     </div>
-
-  )
+  );
 }
