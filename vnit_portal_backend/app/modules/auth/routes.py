@@ -32,7 +32,10 @@ def login(username: str, password: str):
             "role": row[2]
         })
 
-        return {"access_token": token}
+        return {
+            "access_token": token,
+            "role": user_role
+               }
 
     finally:
         cur.close()
