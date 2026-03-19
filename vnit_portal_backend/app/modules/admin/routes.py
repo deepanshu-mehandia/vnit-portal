@@ -42,20 +42,23 @@ def course_popularity(user=Depends(require_role("admin"))):
 
     conn = get_connection()
     cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT c.course_name, COUNT(*) as total
+            FROM registration r
+            JOIN course_offering co ON r.offering_id = co.offering_id
+            JOIN course c ON co.course_id = c.course_id
+            GROUP BY c.course_name
+            ORDER BY total DESC
+        """)
 
-    cur.execute("""
-        SELECT c.course_name, COUNT(*) as total
-        FROM registration r
-        JOIN course_offering co ON r.offering_id = co.offering_id
-        JOIN course c ON co.course_id = c.course_id
-        GROUP BY c.course_name
-        ORDER BY total DESC
-    """)
+        rows = cur.fetchall()
 
-    rows = cur.fetchall()
-
-    return [{"course": r[0], "count": r[1]} for r in rows]
-
+        return [{"course": r[0], "count": r[1]} for r in rows]
+    finally:
+        cur.close()
+        conn.close()
+        
 
 # ✅ Recent registrations
 @router.get("/recent")
@@ -63,16 +66,19 @@ def recent_registrations(user=Depends(require_role("admin"))):
 
     conn = get_connection()
     cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT s.first_name, c.course_name
+            FROM registration r
+            JOIN student s ON r.student_id = s.student_id
+            JOIN course_offering co ON r.offering_id = co.offering_id
+            JOIN course c ON co.course_id = c.course_id
+            FETCH FIRST 10 ROWS ONLY
+        """)
 
-    cur.execute("""
-        SELECT s.first_name, c.course_name
-        FROM registration r
-        JOIN student s ON r.student_id = s.student_id
-        JOIN course_offering co ON r.offering_id = co.offering_id
-        JOIN course c ON co.course_id = c.course_id
-        FETCH FIRST 10 ROWS ONLY
-    """)
+        rows = cur.fetchall()
 
-    rows = cur.fetchall()
-
-    return [{"student": r[0], "course": r[1]} for r in rows]
+        return [{"student": r[0], "course": r[1]} for r in rows]
+    finally:
+        cur.close()
+        conn.close()
