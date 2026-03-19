@@ -16,7 +16,9 @@ useEffect(() => {
 export default function Registration() {
 
   const [courses,setCourses] = useState([])
-
+  
+  const id = 1;
+  
   useEffect(() => {
     async function register() {
       await api("/registration/add?offering_id=" + id, {
