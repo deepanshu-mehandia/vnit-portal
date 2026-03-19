@@ -12,76 +12,20 @@ def add_course(offering_id: int, user=Depends(get_current_user)):
     conn = get_connection()
     cur = conn.cursor()
 
-    try:
+    cur.execute("SELECT COUNT(*) FROM registration WHERE student_id=%s AND offering_id=%s",
+                (student_id, offering_id))
 
-        # 1️⃣ Duplicate check
-        cur.execute("""
-            SELECT COUNT(*) FROM registration
-            WHERE student_id = :1 AND offering_id = :2
-        """, [student_id, offering_id])
+    if cur.fetchone()[0] > 0:
+        raise HTTPException(400, "Already registered")
 
-        if cur.fetchone()[0] > 0:
-            raise HTTPException(400, "Already registered")
+    cur.execute("""
+        INSERT INTO registration(student_id, offering_id)
+        VALUES(%s, %s)
+    """, (student_id, offering_id))
 
-        # 2️⃣ Credit check
-        cur.execute("""
-            SELECT NVL(SUM(c.credits),0)
-            FROM registration r
-            JOIN course_offering co ON r.offering_id = co.offering_id
-            JOIN course c ON co.course_id = c.course_id
-            WHERE r.student_id = :1
-        """, [student_id])
+    conn.commit()
 
-        current_credits = cur.fetchone()[0]
-
-        cur.execute("""
-            SELECT c.credits
-            FROM course_offering co
-            JOIN course c ON co.course_id = c.course_id
-            WHERE co.offering_id = :1
-        """, [offering_id])
-
-        course_credits = cur.fetchone()[0]
-
-        if current_credits + course_credits > 24:
-            raise HTTPException(400, "Credit limit exceeded")
-
-        # 3️⃣ Capacity check
-        cur.execute("""
-            SELECT capacity, enrolled
-            FROM course_offering
-            WHERE offering_id = :1
-        """, [offering_id])
-
-        capacity, enrolled = cur.fetchone()
-
-        if enrolled >= capacity:
-            raise HTTPException(400, "Course is full")
-
-        # 4️⃣ Insert
-        cur.execute("""
-            INSERT INTO registration(registration_id, student_id, offering_id)
-            VALUES(reg_seq.NEXTVAL, :1, :2)
-        """, [student_id, offering_id])
-
-        # 5️⃣ Update enrolled count
-        cur.execute("""
-            UPDATE course_offering
-            SET enrolled = enrolled + 1
-            WHERE offering_id = :1
-        """, [offering_id])
-
-        conn.commit()
-
-        return {"msg": "Course registered successfully"}
-
-    except:
-        conn.rollback()
-        raise
-
-    finally:
-        cur.close()
-        conn.close()
+    return {"msg": "Registered"}
 
 @router.get("/registration/courses")
 def get_courses(user=Depends(get_current_user)):
