@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { isAuthenticated, getUserRole } from "@/lib/auth";
-import Chart from "@/components/charts";
+import dynamic from "next/dynamic";
+const Chart = dynamic(() => import("@/components/charts"), {
+	ssr: false,
+});
 
 export default function AdminPage() {
   const router = useRouter();

@@ -1,55 +1,46 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"
-import { isAuthenticated } from "@/lib/auth"
-import { api } from "@/lib/api"; 
+import { useRouter } from "next/navigation";
+import { isAuthenticated } from "@/lib/auth";
+import { api } from "@/lib/api";
 
-const router = useRouter()
+export default function Fees() {
+  const router = useRouter();
+  const [fees, setFees] = useState<any[]>([]);
 
-useEffect(() => {
-  if (!isAuthenticated()) {
-    router.push("/login")
-  }
-}, [])
-
-export default function Fees(){
-
-  const [fees,setFees] = useState([])
-
+  // ✅ auth check
   useEffect(() => {
-  async function loadFees() {
-    try {
-      const res = await api("/fees/demand/1");
-      setFees(res); // ⚠️ no .data
-    } catch (err) {
-      console.error(err);
+    if (!isAuthenticated()) {
+      router.push("/login");
     }
-  }
+  }, []);
 
-  loadFees();
-}, []);
+  // ✅ fetch data
+  useEffect(() => {
+    async function loadFees() {
+      try {
+        const res = await api("/fees/demand/1");
+        setFees(res);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadFees();
+  }, []);
 
   return (
-
     <div>
+      <h2 className="text-xl font-bold mb-4">Fee Demands</h2>
 
-      <h2 className="text-xl font-bold mb-4">
-        Fee Demands
-      </h2>
-
-      {fees.map((f:any)=>(
-        <div key={f.demand_id}
-        className="bg-white p-4 shadow mb-3">
-
+      {fees.map((f: any) => (
+        <div key={f.demand_id} className="bg-white p-4 shadow mb-3">
           Amount: ₹{f.amount}
-          <br/>
+          <br />
           Status: {f.status}
-
         </div>
       ))}
-
     </div>
-
-  )
+  );
 }
