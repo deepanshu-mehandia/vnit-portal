@@ -1,19 +1,17 @@
-"use client";
-
-import Sidebar from "../components/sidebar"
-import Navbar from "../components/navbar"
-import { ThemeProvider } from "next-themes"
+import Sidebar from "../components/sidebar";
+import Navbar from "../components/navbar";
+import Providers from "../components/providers";
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
       <body>
 
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <Providers>
 
           <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-950">
 
@@ -31,9 +29,9 @@ export default function RootLayout({
 
           </div>
 
-        </ThemeProvider>
+        </Providers>
 
       </body>
     </html>
-  )
+  );
 }
