@@ -1,84 +1,134 @@
 from fastapi import APIRouter, Depends
+from app.core.dependencies import get_current_user
 from app.database.connection import get_connection
-from app.core.dependencies import require_role
 
-router = APIRouter(prefix="/admin")
+router = APIRouter()
 
+@router.post("/assign-advisor")
+def assign_advisor(data: dict, user=Depends(get_current_user)):
 
-# ✅ Dashboard stats
-@router.get("/stats")
-def get_stats(user=Depends(require_role("admin"))):
+    if user["role"] != "admin":
+        return {"error": "Unauthorized"}
 
-    conn = get_connection()
-    cur = conn.cursor()
-
-    try:
-        # total students
-        cur.execute("SELECT COUNT(*) FROM student")
-        students = cur.fetchone()[0]
-
-        # total registrations
-        cur.execute("SELECT COUNT(*) FROM registration")
-        registrations = cur.fetchone()[0]
-
-        # total courses
-        cur.execute("SELECT COUNT(*) FROM course")
-        courses = cur.fetchone()[0]
-
-        return {
-            "students": students,
-            "registrations": registrations,
-            "courses": courses
-        }
-
-    finally:
-        cur.close()
-        conn.close()
-
-
-# ✅ Course popularity
-@router.get("/course-popularity")
-def course_popularity(user=Depends(require_role("admin"))):
+    student_ids = data["student_ids"]
+    faculty_id = data["faculty_id"]
 
     conn = get_connection()
     cur = conn.cursor()
-    try:
+
+    for sid in student_ids:
         cur.execute("""
-            SELECT c.course_name, COUNT(*) as total
-            FROM registration r
-            JOIN course_offering co ON r.offering_id = co.offering_id
-            JOIN course c ON co.course_id = c.course_id
-            GROUP BY c.course_name
-            ORDER BY total DESC
-        """)
+            UPDATE students
+            SET advisor_id = %s
+            WHERE student_id = %s
+        """, (faculty_id, sid))
 
-        rows = cur.fetchall()
+    conn.commit()
 
-        return [{"course": r[0], "count": r[1]} for r in rows]
-    finally:
-        cur.close()
-        conn.close()
-        
+    return {"message": "Advisor assigned"}
 
-# ✅ Recent registrations
-@router.get("/recent")
-def recent_registrations(user=Depends(require_role("admin"))):
+@router.get("/faculty/students")
+def get_students(user=Depends(get_current_user)):
+
+    if user["role"] != "faculty":
+        return {"error": "Unauthorized"}
 
     conn = get_connection()
     cur = conn.cursor()
-    try:
-        cur.execute("""
-            SELECT s.first_name, c.course_name
-            FROM registration r
-            JOIN student s ON r.student_id = s.student_id
-            JOIN course_offering co ON r.offering_id = co.offering_id
-            JOIN course c ON co.course_id = c.course_id
-            FETCH FIRST 10 ROWS ONLY
-        """)
 
-        rows = cur.fetchall()
+    # get faculty_id
+    cur.execute("SELECT faculty_id FROM faculty WHERE user_id=%s", (user["user_id"],))
+    faculty_id = cur.fetchone()[0]
 
-        return [{"student": r[0], "course": r[1]} for r in rows]
-    finally:
-        cur.close()
-        conn.close()
+    cur.execute("""
+        SELECT * FROM students
+        WHERE advisor_id = %s
+    """, (faculty_id,))
+
+    rows = cur.fetchall()
+
+    return rows
+
+@router.get("/faculty/pending")
+def pending(user=Depends(get_current_user)):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT f.faculty_id FROM faculty f
+        WHERE f.user_id = %s
+    """, (user["user_id"],))
+
+    faculty_id = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT r.reg_id, s.name, c.course_name, r.status
+        FROM registrations r
+        JOIN students s ON r.student_id = s.student_id
+        JOIN course_offerings co ON r.offering_id = co.offering_id
+        JOIN courses c ON co.course_id = c.course_id
+        WHERE s.advisor_id = %s
+        AND r.status = 'pending'
+    """, (faculty_id,))
+
+    return cur.fetchall()
+
+@router.post("/faculty/approve")
+def approve(data: dict, user=Depends(get_current_user)):
+
+    reg_id = data["reg_id"]
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE registrations
+        SET status='approved'
+        WHERE reg_id=%s
+    """, (reg_id,))
+
+    conn.commit()
+
+    return {"message": "Approved"}
+
+@router.post("/faculty/reject")
+def reject(data: dict, user=Depends(get_current_user)):
+
+    reg_id = data["reg_id"]
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE registrations
+        SET status='rejected'
+        WHERE reg_id=%s
+    """, (reg_id,))
+
+    conn.commit()
+
+    return {"message": "Rejected"}
+
+@router.post("/registration/add")
+def register(offering_id: int, user=Depends(get_current_user)):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # get student_id
+    cur.execute("""
+        SELECT student_id FROM students
+        WHERE user_id=%s
+    """, (user["user_id"],))
+
+    student_id = cur.fetchone()[0]
+
+    cur.execute("""
+        INSERT INTO registrations (student_id, offering_id)
+        VALUES (%s, %s)
+    """, (student_id, offering_id))
+
+    conn.commit()
+
+    return {"message": "Registered (pending approval)"}
