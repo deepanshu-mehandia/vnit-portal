@@ -11,32 +11,43 @@ class LoginRequest(BaseModel):
 
 @router.post("/login")
 def login(data: LoginRequest):
-    conn = get_connection()
-    cur = conn.cursor()
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
 
-    cur.execute("""
-        SELECT user_id, password, role
-        FROM users
-        WHERE username = %s
-    """, (data.username,))
+        cur.execute("""
+            SELECT user_id, password, role
+            FROM users
+            WHERE username = %s
+        """, (data.username,))
 
-    user = cur.fetchone()
+        user = cur.fetchone()
+        print("USER:", user)
 
-    # 🚨 CRITICAL FIX
-    if not user:
-        return {"error": "User not found"}
+        if not user:
+            return {"error": "User not found"}
 
-    user_id, hashed_password, role = user
+        user_id, hashed_password, role = user
 
-    if not verify_password(data.password, hashed_password):
-        return {"error": "Invalid password"}
+        print("VERIFYING PASSWORD")
 
-    token = create_access_token({
-        "user_id": user_id,
-        "role": role
-    })
+        if not verify_password(data.password, hashed_password):
+            return {"error": "Invalid password"}
 
-    return {
-        "access_token": token,
-        "role": role
-    }
+        print("CREATING TOKEN")
+
+        token = create_access_token({
+            "user_id": user_id,
+            "role": role
+        })
+
+        print("TOKEN CREATED")
+
+        return {
+            "access_token": token,
+            "role": role
+        }
+
+    except Exception as e:
+        print("ERROR:", str(e))
+        return {"error": str(e)}
