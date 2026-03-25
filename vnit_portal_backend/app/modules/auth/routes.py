@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.database.connection import get_connection
 from app.core.security import verify_password, create_access_token
 
@@ -50,4 +50,4 @@ def login(data: LoginRequest):
 
     except Exception as e:
         print("ERROR:", str(e))
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
