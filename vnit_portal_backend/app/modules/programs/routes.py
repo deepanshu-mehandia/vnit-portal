@@ -6,7 +6,7 @@ router = APIRouter(prefix="/programs", tags=["Programs"])
 # 1. Program Types
 @router.get("/types")
 def get_program_types():
-    conn = get_db()
+    conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("SELECT id, name FROM program_types ORDER BY id;")
@@ -21,7 +21,7 @@ def get_program_types():
 # 2. Programs
 @router.get("/{type_id}")
 def get_programs(type_id: int):
-    conn = get_db()
+    conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
@@ -41,7 +41,7 @@ def get_programs(type_id: int):
 # 3. Program Titles
 @router.get("/titles/{program_id}")
 def get_titles(program_id: int):
-    conn = get_db()
+    conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
