@@ -5,6 +5,7 @@ from app.modules.auth.routes import router as auth_router
 from app.modules.students.routes import router as student_router
 from app.modules.registration.routes import router as reg_router
 from app.modules.admin.routes import router as admin_router
+from app.modules.programs.routes import router as program_router
 
 app = FastAPI()
 
@@ -20,6 +21,7 @@ app.include_router(auth_router)
 app.include_router(student_router)
 app.include_router(reg_router)
 app.include_router(admin_router)
+app.include_router(program_router)
 
 @app.get("/")
 def root():
