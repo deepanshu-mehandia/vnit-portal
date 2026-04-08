@@ -7,24 +7,38 @@ import { api } from "@/lib/api";
 
 export default function Registration() {
   const router = useRouter();
+
   const [courses, setCourses] = useState<any[]>([]);
-  const id = 1;
 
   useEffect(() => {
     if (!isAuthenticated()) {
       router.push("/login");
+      return;
     }
+
+    loadCourses();
   }, []);
 
-  useEffect(() => {
-    async function register() {
-      await api("/registration/add?offering_id=" + id, {
+  async function loadCourses() {
+    try {
+      const res = await api("/registration/courses");
+      setCourses(res);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function handleRegister(offeringId: number) {
+    try {
+      await api(`/registration/add?offering_id=${offeringId}`, {
         method: "POST",
       });
+      alert("Registered successfully");
+    } catch (err) {
+      console.error(err);
+      alert("Registration failed");
     }
-
-    register();
-  }, []);
+  }
 
   return (
     <div>
@@ -35,14 +49,23 @@ export default function Registration() {
           <tr>
             <th>Course Code</th>
             <th>Course Name</th>
+            <th>Action</th>
           </tr>
         </thead>
 
         <tbody>
           {courses.map((c: any, index) => (
             <tr key={index}>
-              <td>{c.code}</td>
-              <td>{c.name}</td>
+              <td>{c.course_code}</td>
+              <td>{c.course_name}</td>
+              <td>
+                <button
+                  onClick={() => handleRegister(c.offering_id)}
+                  className="bg-blue-500 text-white px-3 py-1 rounded"
+                >
+                  Register
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
