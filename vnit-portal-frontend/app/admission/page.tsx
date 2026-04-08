@@ -6,11 +6,14 @@ export default function Admission() {
   const [types, setTypes] = useState<any[]>([]);
   const [programs, setPrograms] = useState<any[]>([]);
   const [titles, setTitles] = useState<any[]>([]);
+
   const [selectedType, setSelectedType] = useState("");
   const [selectedProgram, setSelectedProgram] = useState("");
   const [selectedTitle, setSelectedTitle] = useState("");
-  const [typeId, setTypeId] = useState("");
-  const [programId, setProgramId] = useState("");
+
+  // NEW
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     fetch("https://vnit-portal.onrender.com/programs/types")
@@ -47,6 +50,8 @@ export default function Admission() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        name,
+        email,
         program_type_id: selectedType,
         program_id: selectedProgram,
         program_title_id: selectedTitle,
@@ -91,6 +96,28 @@ export default function Admission() {
         ))}
       </select>
 
+      <input
+        placeholder="Full Name"
+        className="border p-2 w-full"
+        onChange={(e) => setName(e.target.value)}
+      />
+
+      <input
+        placeholder="Email"
+        className="border p-2 w-full"
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      
+      if (!selectedType || !selectedProgram || !selectedTitle) {
+        alert("Select program properly");
+        return;
+      }
+
+      if (!name || !email) {
+        alert("Fill all details");
+        return;
+      }
+      
       <button onClick={handleSubmit} className="bg-green-500 text-white px-4 py-2 rounded">
         Submit Admission
       </button>
