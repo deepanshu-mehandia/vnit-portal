@@ -66,7 +66,7 @@ export default function Admission() {
   }
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow space-y-4">
       <h1 className="text-2xl font-bold">Admission Form</h1>
 
       <select onChange={(e) => {
