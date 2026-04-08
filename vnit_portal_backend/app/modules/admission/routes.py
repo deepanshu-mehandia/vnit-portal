@@ -9,9 +9,11 @@ def submit_admission(data: dict):
     cur = conn.cursor()
 
     cur.execute("""
-        INSERT INTO students (program_type_id, program_id, program_title_id)
-        VALUES (%s, %s, %s)
+        INSERT INTO students (name, email, program_type_id, program_id, program_title_id)
+        VALUES (%s, %s, %s, %s, %s)
     """, (
+        data["name"],
+        data["email"],
         data["program_type_id"],
         data["program_id"],
         data["program_title_id"]
