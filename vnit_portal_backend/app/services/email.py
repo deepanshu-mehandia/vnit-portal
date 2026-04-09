@@ -12,22 +12,22 @@ def send_credentials_email(to_email, username, password):
     subject = "VNIT Portal - Login Credentials"
 
     body = f"""
-    Welcome to VNIT Portal 🎓
+Welcome to VNIT Portal 🎓
 
-    Your account has been created successfully.
+Your account has been created successfully.
 
-    🔐 Login Credentials:
-    Username: {username}
-    Password: {password}
+🔐 Login Credentials:
+Username: {username}
+Password: {password}
 
-    👉 Login here:
-    https://vnit-portal.vercel.app/login
+👉 Login here:
+https://vnit-portal.vercel.app/login
 
-    ⚠️ Change password after first login.
+⚠️ Change password after first login.
 
-    Regards,  
-    VNIT Administration
-    """
+Regards,  
+VNIT Administration
+"""
 
     msg = MIMEText(body)
     msg["Subject"] = subject
@@ -41,7 +41,9 @@ def send_credentials_email(to_email, username, password):
         server.send_message(msg)
         server.quit()
 
-    success = send_credentials_email(...)
+        print("EMAIL SENT SUCCESSFULLY")
+        return True
 
-    if not success:
-        print("Email failed but admission stored")
+    except Exception as e:
+        print("EMAIL ERROR:", e)
+        return False
