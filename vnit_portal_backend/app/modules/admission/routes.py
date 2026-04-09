@@ -54,11 +54,14 @@ def submit_admission(data: dict):
     cur.close()
     conn.close()
 
-    send_credentials_email(
+    email_sent=send_credentials_email(
         to_email=data["email"],
         username=username,
         password=raw_password
     )
+
+    if not email_not:
+        print("Email failed but admission stored")
     
     return {
         "message": "Admission successful",
