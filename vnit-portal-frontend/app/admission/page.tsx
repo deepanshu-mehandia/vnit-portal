@@ -7,12 +7,19 @@ export default function Admission() {
   const [programs, setPrograms] = useState<any[]>([]);
   const [titles, setTitles] = useState<any[]>([]);
 
-  const [selectedType, setSelectedType] = useState("");
-  const [selectedProgram, setSelectedProgram] = useState("");
-  const [selectedTitle, setSelectedTitle] = useState("");
+  const [selectedType, setSelectedType] = useState<number | "">("");
+  const [selectedProgram, setSelectedProgram] = useState<number | "">("");
+  const [selectedTitle, setSelectedTitle] = useState<number | "">("");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState("");
+  const [category, setCategory] = useState("");
+  const [state, setState] = useState("");
+  const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetch("https://vnit-portal.onrender.com/programs/types")
@@ -46,13 +53,15 @@ export default function Admission() {
       return;
     }
 
-    if (!name || !email) {
-      alert("Fill all details");
+    if (!name || !email || !mobile || !dob || !gender || !category || !state || !address) {
+      alert("Fill all required fields");
       return;
     }
 
+    setLoading(true);
+
     try {
-      await fetch("https://vnit-portal.onrender.com/admission", {
+      const res = await fetch("https://vnit-portal.onrender.com/admission", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -60,16 +69,32 @@ export default function Admission() {
         body: JSON.stringify({
           name,
           email,
+          mobile,
+          dob,
+          gender,
+          category,
+          state,
+          address,
           program_type_id: selectedType,
           program_id: selectedProgram,
           program_title_id: selectedTitle,
         }),
       });
 
-      alert("Admission submitted");
+      if (!res.ok) {
+        throw new Error("Server error");
+      }
+
+      const data = await res.json();
+
+      alert(`Admission submitted! ID: ${data.admission_id}`);
+      window.location.reload();
+
     } catch (err) {
       console.error(err);
       alert("Failed");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -96,9 +121,9 @@ export default function Admission() {
 
       <div>
         <label className="text-sm text-gray-600">Program Type</label>
-        <select
+        <select value={selectedType}
           onChange={(e) => {
-            setSelectedType(e.target.value);
+            setSelectedType(e.target.value ? Number(e.target.value) : "");
             handleType(e);
           }}
           className="w-full mt-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -112,10 +137,10 @@ export default function Admission() {
 
       <div>
         <label className="text-sm text-gray-600">Program</label>
-        <select
+        <select value={selectedProgram}
           disabled={!selectedType}
           onChange={(e) => {
-            setSelectedProgram(e.target.value);
+            setSelectedProgram(e.target.value ? Number(e.target.value) : "");
             handleProgram(e);
           }}
           className="w-full mt-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -129,9 +154,9 @@ export default function Admission() {
 
       <div>
         <label className="text-sm text-gray-600">Program Title</label>
-        <select
+        <select value={selectedTitle}
           disabled={!selectedProgram}
-          onChange={(e) => setSelectedTitle(e.target.value)}
+          onChange={(e) => setSelectedTitle(e.target.value ? Number(e.target.value) : "")}
           className="w-full mt-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Select</option>
@@ -145,51 +170,118 @@ export default function Admission() {
   </div>
 
   {/* PERSONAL DETAILS */}
-  <div className="border rounded-xl p-6 transition-all duration-200 hover:shadow-md">
-    <h2 className="text-lg font-semibold text-gray-700 mb-4">
-      Personal Details
-    </h2>
+  <div className="border rounded-xl p-6 space-y-4 transition-all duration-200 hover:shadow-md">
+  <h2 className="text-lg font-semibold text-gray-700">Personal Details</h2>
 
-    <div className="grid md:grid-cols-3 gap-4">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-      <div>
-        <label className="text-sm text-gray-600">Full Name</label>
-        <input
-          className="w-full mt-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
+    <input
+      placeholder="Full Name"
+      className="border p-2 rounded"
+      onChange={(e) => setName(e.target.value)}
+    />
 
-      <div>
-        <label className="text-sm text-gray-600">Email</label>
-        <input
-          className="w-full mt-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
+    <input
+      placeholder="Email"
+      className="border p-2 rounded"
+      onChange={(e) => setEmail(e.target.value)}
+    />
 
-      <div>
-        <label className="text-sm text-gray-600">Mobile</label>
-        <input
-          className="w-full mt-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+    <input
+      placeholder="Mobile"
+      className="border p-2 rounded"
+      onChange={(e) => setMobile(e.target.value)}
+    />
 
-    </div>
+    <input
+      type="date"
+      className="border p-2 rounded"
+      onChange={(e) => setDob(e.target.value)}
+    />
+
+    <select value={gender}
+      className="border p-2 rounded"
+      onChange={(e) => setGender(e.target.value)}
+    >
+      <option value="">Select Gender</option>
+      <option>Male</option>
+      <option>Female</option>
+      <option>Other</option>
+    </select>
+
+    <select value={category}
+      className="border p-2 rounded"
+      onChange={(e) => setCategory(e.target.value)}
+    >
+      <option value="">Select Category</option>
+      <option>General</option>
+      <option>OBC</option>
+      <option>SC</option>
+      <option>ST</option>
+    </select>
+
   </div>
+</div>
+
+<div className="border rounded-xl p-6 space-y-4 transition-all duration-200 hover:shadow-md">
+  <h2 className="text-lg font-semibold text-gray-700">Address Details</h2>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <input
+      placeholder="State"
+      className="border p-2 rounded"
+      onChange={(e) => setState(e.target.value)}
+    />
+
+    <input
+      placeholder="City"
+      className="border p-2 rounded"
+    />
+
+    <input
+      placeholder="PIN Code"
+      className="border p-2 rounded"
+    />
+
+    <textarea
+      placeholder="Full Address"
+      className="border p-2 rounded md:col-span-2"
+      onChange={(e) => setAddress(e.target.value)}
+    />
+
+  </div>
+</div>
 
   {/* ACTION BUTTONS */}
   <div className="flex justify-between items-center">
 
-    <button className="text-gray-500 hover:underline">
+    <button
+      onClick={() => {
+      setSelectedType("");
+      setSelectedProgram("");
+      setSelectedTitle("");
+      setName("");
+      setEmail("");
+      setMobile("");
+      setDob("");
+      setGender("");
+      setCategory("");
+      setState("");
+      setAddress("");
+      }}
+      className="text-gray-500 hover:underline"
+    >
       Reset
     </button>
 
     <button
       onClick={handleSubmit}
-      className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow transition-all duration-200 hover:scale-105"
+      disabled={loading}
+      className={`bg-green-600 text-white px-8 py-3 rounded-lg font-semibold shadow transition-all duration-200 
+      ${loading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700 hover:scale-105"}`}
     >
-      Submit Application
+      {loading ? "Submitting..." : "Submit Application"}
     </button>
 
   </div>
