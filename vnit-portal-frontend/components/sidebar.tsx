@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image"
+import Link from "next/link";
 
 export default function Sidebar() {
   return (
@@ -14,11 +15,12 @@ export default function Sidebar() {
       {/* Menu */}
       <nav className="space-y-4 text-sm">
 
-        <a href="/dashboard" className="hover:text-gray-300">Dashboard</a>
-        <a href="/registration" className="hover:text-gray-300">Registration</a>
-        <a href="/fees" className="hover:text-gray-300">Fees</a>
-        <a href="/students" className="hover:text-gray-300">Students</a>
-        <a href="/admin" className="hover:text-gray-300">Admin</a>
+        <Link href="/dashboard" className="block hover:text-blue-400">Dashboard</Link>
+        <Link href="/registration" className="block hover:text-blue-400">Registration</Link>
+        <Link href="/fees" className="block hover:text-blue-400">Fees</Link>
+        <Link href="/students" className="block hover:text-blue-400">Students</Link>
+        <Link href="/admin" className="block hover:text-blue-400">Admin</Link>
+        <Link href="/admission" className="block hover:text-blue-400">Admission</Link>
 
       </nav>
 
