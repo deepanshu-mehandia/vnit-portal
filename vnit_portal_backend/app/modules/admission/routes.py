@@ -1,44 +1,58 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from app.database.connection import get_connection
-from app.modules.admission.schema import AdmissionCreate
+import random
+import string
 
 router = APIRouter(prefix="/admission", tags=["Admission"])
 
+def generate_password(length=8):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
 @router.post("")
-def submit_admission(data: AdmissionCreate):
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
+def submit_admission(data: dict):
+    conn = get_connection()
+    cur = conn.cursor()
 
-        cur.execute("""
-            INSERT INTO admissions 
-            (name, email, mobile, dob, gender, category, state, address, program_type_id, program_id, program_title_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            data.name,
-            data.email,
-            data.mobile,
-            data.dob,
-            data.gender,
-            data.category,
-            data.state,
-            data.address,
-            data.program_type_id,
-            data.program_id,
-            data.program_title_id
-        ))
+    # 🔹 Generate credentials
+    username = data["email"]
+    password = generate_password()
 
-        admission_id = cur.fetchone()[0]
+    # 🔹 1. Insert into users table
+    cur.execute("""
+        INSERT INTO users (username, password, role)
+        VALUES (%s, %s, %s)
+        RETURNING user_id
+    """, (username, password, "student"))
 
-        conn.commit()
-        cur.close()
-        conn.close()
+    user_id = cur.fetchone()[0]
 
-        return {
-            "message": "Admission submitted",
-            "admission_id": admission_id
-        }
+    # 🔹 2. Insert into students table (link with user_id)
+    cur.execute("""
+        INSERT INTO students 
+        (user_id, name, email, mobile, dob, gender, category, state, address,
+         program_type_id, program_id, program_title_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (
+        user_id,
+        data["name"],
+        data["email"],
+        data["mobile"],
+        data["dob"],
+        data["gender"],
+        data["category"],
+        data["state"],
+        data["address"],
+        data["program_type_id"],
+        data["program_id"],
+        data["program_title_id"]
+    ))
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return {
+        "message": "Admission successful",
+        "username": username,
+        "password": password  # TEMP (for testing)
+    }
