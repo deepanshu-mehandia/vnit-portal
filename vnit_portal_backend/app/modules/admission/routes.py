@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from app.database.connection import get_connection
+from app.core.security import hash_password
 import random
 import string
 
@@ -15,14 +16,15 @@ def submit_admission(data: dict):
 
     # 🔹 Generate credentials
     username = data["email"]
-    password = generate_password()
+    raw_password = generate_password()
+    hashed_password = hash_password(raw_password)
 
     # 🔹 1. Insert into users table
     cur.execute("""
         INSERT INTO users (username, password, role)
         VALUES (%s, %s, %s)
         RETURNING user_id
-    """, (username, password, "student"))
+    """, (username, hashed_password, "student"))
 
     user_id = cur.fetchone()[0]
 
@@ -54,5 +56,5 @@ def submit_admission(data: dict):
     return {
         "message": "Admission successful",
         "username": username,
-        "password": password  # TEMP (for testing)
+        "password": raw_password  # TEMP (for testing)
     }

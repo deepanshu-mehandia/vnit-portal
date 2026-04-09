@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from app.database.connection import get_connection
 from app.core.security import verify_password, create_access_token
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 class LoginRequest(BaseModel):
     username: str
@@ -22,26 +22,22 @@ def login(data: LoginRequest):
         """, (data.username,))
 
         user = cur.fetchone()
-        print("USER:", user)
 
         if not user:
-            return {"error": "User not found"}
+            raise HTTPException(status_code=404, detail="User not found")
 
         user_id, hashed_password, role = user
 
-        print("VERIFYING PASSWORD")
-
         if not verify_password(data.password, hashed_password):
-            return {"error": "Invalid password"}
-
-        print("CREATING TOKEN")
+            raise HTTPException(status_code=401, detail="Invalid password")
 
         token = create_access_token({
             "user_id": user_id,
             "role": role
         })
 
-        print("TOKEN CREATED")
+        cur.close()
+        conn.close()
 
         return {
             "access_token": token,
