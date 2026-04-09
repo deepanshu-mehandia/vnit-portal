@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from app.database.connection import get_connection
 from app.core.security import hash_password
+from app.services.email import send_credentials_email
 import random
 import string
 
@@ -53,6 +54,12 @@ def submit_admission(data: dict):
     cur.close()
     conn.close()
 
+    send_credentials_email(
+        to_email=data["email"],
+        username=username,
+        password=raw_password
+    )
+    
     return {
         "message": "Admission successful",
         "username": username,
