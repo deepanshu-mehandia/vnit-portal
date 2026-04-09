@@ -60,7 +60,7 @@ def submit_admission(data: dict):
         password=raw_password
     )
 
-    if not email_not:
+    if not email_sent:
         print("Email failed but admission stored")
     
     return {
