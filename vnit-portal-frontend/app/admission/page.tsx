@@ -74,7 +74,7 @@ export default function Admission() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-8">
+    <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-8 transition-all duration-200 hover:shadow-2xl">
 
   {/* HEADER */}
   <div>
@@ -87,7 +87,7 @@ export default function Admission() {
   </div>
 
   {/* PROGRAM DETAILS */}
-  <div className="border rounded-xl p-6">
+  <div className="border rounded-xl p-6 transition-all duration-200 hover:shadow-md">
     <h2 className="text-lg font-semibold text-gray-700 mb-4">
       Program Details
     </h2>
@@ -145,7 +145,7 @@ export default function Admission() {
   </div>
 
   {/* PERSONAL DETAILS */}
-  <div className="border rounded-xl p-6">
+  <div className="border rounded-xl p-6 transition-all duration-200 hover:shadow-md">
     <h2 className="text-lg font-semibold text-gray-700 mb-4">
       Personal Details
     </h2>
@@ -187,7 +187,7 @@ export default function Admission() {
 
     <button
       onClick={handleSubmit}
-      className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow"
+      className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow transition-all duration-200 hover:scale-105"
     >
       Submit Application
     </button>
