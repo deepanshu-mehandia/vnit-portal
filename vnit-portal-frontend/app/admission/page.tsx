@@ -74,6 +74,9 @@ export default function Admission() {
   }
 
   return (
+    <div className="bg-red-500 text-white p-6 text-xl">
+  TAILWIND WORKING
+</div>
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg space-y-6">
 
