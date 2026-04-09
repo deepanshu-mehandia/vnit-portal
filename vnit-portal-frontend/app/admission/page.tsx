@@ -19,6 +19,8 @@ export default function Admission() {
   const [category, setCategory] = useState("");
   const [state, setState] = useState("");
   const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -75,6 +77,8 @@ export default function Admission() {
           category,
           state,
           address,
+          city,
+          pin,
           program_type_id: selectedType,
           program_id: selectedProgram,
           program_title_id: selectedTitle,
@@ -176,24 +180,28 @@ export default function Admission() {
   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
     <input
+      value={name}
       placeholder="Full Name"
       className="border p-2 rounded"
       onChange={(e) => setName(e.target.value)}
     />
 
     <input
+      value={email}
       placeholder="Email"
       className="border p-2 rounded"
       onChange={(e) => setEmail(e.target.value)}
     />
 
     <input
+      value={mobile}
       placeholder="Mobile"
       className="border p-2 rounded"
       onChange={(e) => setMobile(e.target.value)}
     />
 
     <input
+      value={dob}
       type="date"
       className="border p-2 rounded"
       onChange={(e) => setDob(e.target.value)}
@@ -229,22 +237,18 @@ export default function Admission() {
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
     <input
+      value={state}
       placeholder="State"
       className="border p-2 rounded"
       onChange={(e) => setState(e.target.value)}
     />
 
-    <input
-      placeholder="City"
-      className="border p-2 rounded"
-    />
+    <input value={city} placeholder="City" className="border p-2 rounded" onChange={(e) => setCity(e.target.value)} />
 
-    <input
-      placeholder="PIN Code"
-      className="border p-2 rounded"
-    />
+    <input value={pin} placeholder="PIN Code" className="border p-2 rounded" onChange={(e) => setPin(e.target.value)} />
 
     <textarea
+      value={address}
       placeholder="Full Address"
       className="border p-2 rounded md:col-span-2"
       onChange={(e) => setAddress(e.target.value)}
@@ -258,17 +262,23 @@ export default function Admission() {
 
     <button
       onClick={() => {
-      setSelectedType("");
-      setSelectedProgram("");
-      setSelectedTitle("");
-      setName("");
-      setEmail("");
-      setMobile("");
-      setDob("");
-      setGender("");
-      setCategory("");
-      setState("");
-      setAddress("");
+        setSelectedType("");
+        setSelectedProgram("");
+        setSelectedTitle("");
+
+        setPrograms([]);
+        setTitles([]);
+
+        setName("");
+        setEmail("");
+        setMobile("");
+        setDob("");
+        setGender("");
+        setCategory("");
+        setState("");
+        setAddress("");
+        setCity("");
+        setPin("");
       }}
       className="text-gray-500 hover:underline"
     >
