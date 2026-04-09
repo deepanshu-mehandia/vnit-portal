@@ -1,57 +1,58 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
 
 export default function Login() {
-  const router = useRouter();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  async function handleLogin(e: any) {
-    e.preventDefault();
+  async function handleLogin() {
+    const res = await fetch("https://vnit-portal.onrender.com/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
 
-    try {
-      const res = await api("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ username, password }),
-      });
+    const data = await res.json();
 
-      // ✅ NOW res exists
-      localStorage.setItem("token", res.access_token);
-      localStorage.setItem("role", res.role);
-
-      // redirect
-      if (res.role === "admin") {
-        router.push("/admin");
-      } else {
-        router.push("/dashboard");
-      }
-
-    } catch (err) {
-      console.error(err);
-      alert("Login failed");
+    if (res.ok) {
+      alert("Login successful");
+    } else {
+      alert("Invalid credentials");
     }
   }
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4">
-      <input
-        placeholder="Username"
-        onChange={(e) => setUsername(e.target.value)}
-        className="border p-2"
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-        className="border p-2"
-      />
-      <button className="bg-blue-500 text-white px-4 py-2">
-        Login
-      </button>
-    </form>
+    <div className="flex items-center justify-center h-screen bg-gray-100">
+
+      <div className="bg-white p-8 rounded-xl shadow-md w-[350px] space-y-4">
+
+        <h1 className="text-xl font-bold">Login</h1>
+
+        <input
+          placeholder="Username"
+          className="w-full border p-2 rounded"
+          onChange={(e) => setUsername(e.target.value)}
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full border p-2 rounded"
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button
+          onClick={handleLogin}
+          className="w-full bg-blue-600 text-white py-2 rounded"
+        >
+          Login
+        </button>
+
+      </div>
+
+    </div>
   );
 }

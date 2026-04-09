@@ -89,9 +89,9 @@ export default function Admission() {
         throw new Error("Server error");
       }
 
-      const data = await res.json();
+      const result = await res.json();
 
-      alert(`Admission submitted! ID: ${data.admission_id}`);
+      alert(`Account Created!\n\nUsername: ${result.username}\nPassword: ${result.password}`);
       window.location.reload();
 
     } catch (err) {
