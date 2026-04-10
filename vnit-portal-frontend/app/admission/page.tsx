@@ -91,7 +91,7 @@ export default function Admission() {
 
       const result = await res.json();
 
-      alert(`Account Created!\n\nUsername: ${result.username}\nPassword: ${result.password}`);
+      alert(`Account Created!\n\nUsername: ${result.username}\n\nCheck you email for password`);
       window.location.reload();
 
     } catch (err) {
