@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
-import { api } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 export default function Students() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function Students() {
   useEffect(() => {
     async function loadStudent() {
       try {
-        const res = await api("/students/1"); // ✅ correct
+        const res = await apiFetch("/students/1"); // ✅ correct
         setStudent(res); // ✅ no .data
       } catch (err) {
         console.error(err);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { isAuthenticated, getUserRole } from "@/lib/auth";
 import dynamic from "next/dynamic";
@@ -34,9 +34,9 @@ export default function AdminPage() {
   useEffect(() => {
     async function fetchData() {
       const [s, c, r] = await Promise.all([
-        api("/admin/stats"),
-        api("/admin/course-popularity"),
-        api("/admin/recent"),
+        apiFetch("/admin/stats"),
+        apiFetch("/admin/course-popularity"),
+        apiFetch("/admin/recent"),
       ]);
 
       setStats(s);

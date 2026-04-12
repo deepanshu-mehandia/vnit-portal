@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
-import { api } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 export default function Fees() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export default function Fees() {
   useEffect(() => {
     async function loadFees() {
       try {
-        const res = await api("/fees/demand/1");
+        const res = await apiFetch("/fees/demand/1");
         setFees(res);
       } catch (err) {
         console.error(err);

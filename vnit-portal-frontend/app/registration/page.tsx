@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
-import { api } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 export default function Registration() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function Registration() {
 
   async function loadCourses() {
     try {
-      const res = await api("/registration/courses");
+      const res = await apiFetch("/registration/courses");
       setCourses(res);
     } catch (err) {
       console.error(err);
@@ -30,7 +30,7 @@ export default function Registration() {
 
   async function handleRegister(offeringId: number) {
     try {
-      await api(`/registration/add?offering_id=${offeringId}`, {
+      await apiFetch(`/registration/add?offering_id=${offeringId}`, {
         method: "POST",
       });
       alert("Registered successfully");
