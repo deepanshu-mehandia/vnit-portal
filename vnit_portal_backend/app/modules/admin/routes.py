@@ -21,6 +21,33 @@ def require_faculty(user=Depends(get_current_user)):
 def admin_dashboard(user=Depends(require_admin)):
     return {"message": "Welcome Admin"}
 
+@router.get("/stats")
+def get_stats(user=Depends(require_admin)):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        # total
+        cur.execute("SELECT COUNT(*) FROM students")
+        total = cur.fetchone()[0]
+
+        # approved
+        cur.execute("SELECT COUNT(*) FROM registrations WHERE status='approved'")
+        approved = cur.fetchone()[0]
+
+        # pending
+        cur.execute("SELECT COUNT(*) FROM registrations WHERE status='pending'")
+        pending = cur.fetchone()[0]
+
+        return {
+            "total": total,
+            "approved": approved,
+            "pending": pending
+        }
+
+    finally:
+        cur.close()
+        conn.close()
 
 @router.post("/assign-advisor")
 def assign_advisor(data: dict, user=Depends(require_admin)):
