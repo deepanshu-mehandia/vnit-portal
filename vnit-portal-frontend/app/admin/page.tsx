@@ -3,103 +3,164 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
-import { isAuthenticated, getUserRole } from "@/lib/auth";
-import dynamic from "next/dynamic";
-const Chart = dynamic(() => import("@/components/charts"), {
-	ssr: false,
-});
 
 export default function AdminPage() {
   const router = useRouter();
 
-  const [stats, setStats] = useState<any>({});
-  const [courses, setCourses] = useState<any[]>([]);
-  const [recent, setRecent] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<string | null>(null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [pending, setPending] = useState<any[]>([]);
 
-  // ✅ AUTH GUARD
   useEffect(() => {
-    if (!isAuthenticated()) {
+    const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("role");
+
+    if (!token) {
       router.push("/login");
       return;
     }
 
-    if (getUserRole() !== "admin") {
-      router.push("/dashboard");
-      return;
+    setRole(userRole);
+
+    async function loadData() {
+      try {
+        // ADMIN → load students
+        if (userRole === "admin") {
+          const res = await apiFetch("/students/all");
+          setStudents(res);
+        }
+
+        // FACULTY → load pending approvals
+        if (userRole === "faculty") {
+          const res = await apiFetch("/admin/faculty/pending");
+          setPending(res);
+        }
+
+      } catch (err) {
+        console.error(err);
+      }
     }
+
+    loadData();
   }, []);
 
-  // ✅ DATA FETCH
-  useEffect(() => {
-    async function fetchData() {
-      const [s, c, r] = await Promise.all([
-        apiFetch("/admin/stats"),
-        apiFetch("/admin/course-popularity"),
-        apiFetch("/admin/recent"),
-      ]);
+  // ================= ADMIN =================
+  async function assignAdvisor(student_id: number) {
+    const faculty_id = prompt("Enter Faculty ID:");
 
-      setStats(s);
-      setCourses(c);
-      setRecent(r);
-      setLoading(false);
-    }
+    if (!faculty_id) return;
 
-    fetchData();
-  }, []);
+    await apiFetch("/admin/assign-advisor", {
+      method: "POST",
+      body: JSON.stringify({
+        student_ids: [student_id],
+        faculty_id: Number(faculty_id),
+      }),
+    });
 
-  if (loading) {
-    return <div className="p-6">Loading dashboard...</div>;
+    alert("Advisor assigned");
+  }
+
+  // ================= FACULTY =================
+  async function approve(reg_id: number) {
+    await apiFetch("/admin/faculty/approve", {
+      method: "POST",
+      body: JSON.stringify({ reg_id }),
+    });
+
+    alert("Approved");
+  }
+
+  async function reject(reg_id: number) {
+    await apiFetch("/admin/faculty/reject", {
+      method: "POST",
+      body: JSON.stringify({ reg_id }),
+    });
+
+    alert("Rejected");
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-8">
 
-      <h1 className="text-3xl font-bold">
-        Admin Dashboard
+      <h1 className="text-3xl font-bold text-gray-800">
+        Admin Panel
       </h1>
 
-      {/* KPI */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* ================= ADMIN VIEW ================= */}
+      {role === "admin" && (
+        <div className="bg-white p-6 rounded-xl shadow">
 
-        <div className="bg-blue-500 text-white p-6 rounded-xl">
-          <p>Students</p>
-          <h2>{stats.students}</h2>
-        </div>
+          <h2 className="text-xl font-semibold mb-4">
+            All Students
+          </h2>
 
-        <div className="bg-green-500 text-white p-6 rounded-xl">
-          <p>Registrations</p>
-          <h2>{stats.registrations}</h2>
-        </div>
+          <div className="space-y-3">
+            {students.map((s) => (
+              <div
+                key={s.student_id}
+                className="flex justify-between items-center border p-3 rounded-lg"
+              >
+                <div>
+                  <p className="font-medium">{s.name}</p>
+                  <p className="text-sm text-gray-500">{s.email}</p>
+                </div>
 
-        <div className="bg-purple-500 text-white p-6 rounded-xl">
-          <p>Courses</p>
-          <h2>{stats.courses}</h2>
-        </div>
-
-      </div>
-
-      {/* Charts + Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <div className="lg:col-span-2 bg-white dark:bg-gray-900 p-6 rounded-xl shadow">
-          <h2 className="mb-4">Course Popularity</h2>
-          <Chart data={courses} />
-        </div>
-
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow">
-          <h2 className="mb-4">Recent Registrations</h2>
-
-          {recent.map((r, i) => (
-            <div key={i} className="flex justify-between text-sm border-b pb-1">
-              <span>{r.student}</span>
-              <span>{r.course}</span>
-            </div>
-          ))}
+                <button
+                  onClick={() => assignAdvisor(s.student_id)}
+                  className="bg-blue-600 text-white px-3 py-1 rounded"
+                >
+                  Assign Advisor
+                </button>
+              </div>
+            ))}
+          </div>
 
         </div>
+      )}
 
-      </div>
+      {/* ================= FACULTY VIEW ================= */}
+      {role === "faculty" && (
+        <div className="bg-white p-6 rounded-xl shadow">
+
+          <h2 className="text-xl font-semibold mb-4">
+            Pending Approvals
+          </h2>
+
+          <div className="space-y-3">
+            {pending.map((p) => (
+              <div
+                key={p.reg_id}
+                className="flex justify-between items-center border p-3 rounded-lg"
+              >
+                <div>
+                  <p className="font-medium">{p.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {p.course_name}
+                  </p>
+                </div>
+
+                <div className="space-x-2">
+                  <button
+                    onClick={() => approve(p.reg_id)}
+                    className="bg-green-600 text-white px-3 py-1 rounded"
+                  >
+                    Approve
+                  </button>
+
+                  <button
+                    onClick={() => reject(p.reg_id)}
+                    className="bg-red-600 text-white px-3 py-1 rounded"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      )}
 
     </div>
   );
