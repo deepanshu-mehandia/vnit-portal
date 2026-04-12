@@ -1,134 +1,171 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from app.core.dependencies import get_current_user
 from app.database.connection import get_connection
 
-router = APIRouter()
+router = APIRouter(prefix="/admin")
+
+# 🔐 ADMIN GUARD
+def require_admin(user=Depends(get_current_user)):
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admins only")
+    return user
+
+# 🔐 FACULTY GUARD
+def require_faculty(user=Depends(get_current_user)):
+    if user["role"] != "faculty":
+        raise HTTPException(status_code=403, detail="Faculty only")
+    return user
+
+
+@router.get("/")
+def admin_dashboard(user=Depends(require_admin)):
+    return {"message": "Welcome Admin"}
+
 
 @router.post("/assign-advisor")
-def assign_advisor(data: dict, user=Depends(get_current_user)):
-
-    if user["role"] != "admin":
-        return {"error": "Unauthorized"}
-
-    student_ids = data["student_ids"]
-    faculty_id = data["faculty_id"]
-
+def assign_advisor(data: dict, user=Depends(require_admin)):
     conn = get_connection()
     cur = conn.cursor()
 
-    for sid in student_ids:
-        cur.execute("""
-            UPDATE students
-            SET advisor_id = %s
-            WHERE student_id = %s
-        """, (faculty_id, sid))
+    try:
+        for sid in data["student_ids"]:
+            cur.execute("""
+                UPDATE students
+                SET advisor_id = %s
+                WHERE student_id = %s
+            """, (data["faculty_id"], sid))
 
-    conn.commit()
+        conn.commit()
+        return {"message": "Advisor assigned"}
 
-    return {"message": "Advisor assigned"}
+    finally:
+        cur.close()
+        conn.close()
+
 
 @router.get("/faculty/students")
-def get_students(user=Depends(get_current_user)):
-
-    if user["role"] != "faculty":
-        return {"error": "Unauthorized"}
-
+def get_students(user=Depends(require_faculty)):
     conn = get_connection()
     cur = conn.cursor()
 
-    # get faculty_id
-    cur.execute("SELECT faculty_id FROM faculty WHERE user_id=%s", (user["user_id"],))
-    faculty_id = cur.fetchone()[0]
+    try:
+        cur.execute("SELECT faculty_id FROM faculty WHERE user_id=%s", (user["user_id"],))
+        row = cur.fetchone()
 
-    cur.execute("""
-        SELECT * FROM students
-        WHERE advisor_id = %s
-    """, (faculty_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="Faculty not found")
 
-    rows = cur.fetchall()
+        faculty_id = row[0]
 
-    return rows
+        cur.execute("""
+            SELECT student_id, name
+            FROM students
+            WHERE advisor_id = %s
+        """, (faculty_id,))
+
+        rows = cur.fetchall()
+
+        return [{"student_id": r[0], "name": r[1]} for r in rows]
+
+    finally:
+        cur.close()
+        conn.close()
+
 
 @router.get("/faculty/pending")
-def pending(user=Depends(get_current_user)):
-
+def pending(user=Depends(require_faculty)):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT f.faculty_id FROM faculty f
-        WHERE f.user_id = %s
-    """, (user["user_id"],))
+    try:
+        cur.execute("SELECT faculty_id FROM faculty WHERE user_id=%s", (user["user_id"],))
+        faculty_id = cur.fetchone()[0]
 
-    faculty_id = cur.fetchone()[0]
+        cur.execute("""
+            SELECT r.reg_id, s.name, r.status
+            FROM registrations r
+            JOIN students s ON r.student_id = s.student_id
+            WHERE s.advisor_id = %s AND r.status = 'pending'
+        """, (faculty_id,))
 
-    cur.execute("""
-        SELECT r.reg_id, s.name, c.course_name, r.status
-        FROM registrations r
-        JOIN students s ON r.student_id = s.student_id
-        JOIN course_offerings co ON r.offering_id = co.offering_id
-        JOIN courses c ON co.course_id = c.course_id
-        WHERE s.advisor_id = %s
-        AND r.status = 'pending'
-    """, (faculty_id,))
+        rows = cur.fetchall()
 
-    return cur.fetchall()
+        return [
+            {"reg_id": r[0], "name": r[1], "status": r[2]}
+            for r in rows
+        ]
+
+    finally:
+        cur.close()
+        conn.close()
+
 
 @router.post("/faculty/approve")
-def approve(data: dict, user=Depends(get_current_user)):
-
-    reg_id = data["reg_id"]
-
+def approve(data: dict, user=Depends(require_faculty)):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        UPDATE registrations
-        SET status='approved'
-        WHERE reg_id=%s
-    """, (reg_id,))
+    try:
+        cur.execute("""
+            UPDATE registrations
+            SET status='approved'
+            WHERE reg_id=%s
+        """, (data["reg_id"],))
 
-    conn.commit()
+        conn.commit()
+        return {"message": "Approved"}
 
-    return {"message": "Approved"}
+    finally:
+        cur.close()
+        conn.close()
+
 
 @router.post("/faculty/reject")
-def reject(data: dict, user=Depends(get_current_user)):
-
-    reg_id = data["reg_id"]
-
+def reject(data: dict, user=Depends(require_faculty)):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        UPDATE registrations
-        SET status='rejected'
-        WHERE reg_id=%s
-    """, (reg_id,))
+    try:
+        cur.execute("""
+            UPDATE registrations
+            SET status='rejected'
+            WHERE reg_id=%s
+        """, (data["reg_id"],))
 
-    conn.commit()
+        conn.commit()
+        return {"message": "Rejected"}
 
-    return {"message": "Rejected"}
+    finally:
+        cur.close()
+        conn.close()
+
 
 @router.post("/registration/add")
 def register(offering_id: int, user=Depends(get_current_user)):
-
     conn = get_connection()
     cur = conn.cursor()
 
-    # get student_id
-    cur.execute("""
-        SELECT student_id FROM students
-        WHERE user_id=%s
-    """, (user["user_id"],))
+    try:
+        cur.execute("""
+            SELECT student_id FROM students
+            WHERE user_id=%s
+        """, (user["user_id"],))
 
-    student_id = cur.fetchone()[0]
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Student not found")
 
-    cur.execute("""
-        INSERT INTO registrations (student_id, offering_id)
-        VALUES (%s, %s)
-    """, (student_id, offering_id))
+        student_id = row[0]
 
-    conn.commit()
+        cur.execute("""
+            INSERT INTO registrations (student_id, offering_id)
+            VALUES (%s, %s)
+        """, (student_id, offering_id))
 
-    return {"message": "Registered (pending approval)"}
+        conn.commit()
+
+        return {"message": "Registered (pending approval)"}
+
+    finally:
+        cur.close()
+        conn.close()

@@ -1,15 +1,15 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from app.database.connection import get_connection
+from app.core.dependencies import get_current_user
 
-router = APIRouter(prefix="/programs", tags=["Programs"])
+router = APIRouter(prefix="/programs")
 
-# 1. Program Types
 @router.get("/types")
-def get_program_types():
+def get_program_types(user=Depends(get_current_user)):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT id, name FROM program_types ORDER BY id;")
+    cur.execute("SELECT id, name FROM program_types ORDER BY id")
     data = cur.fetchall()
 
     cur.close()
@@ -18,16 +18,14 @@ def get_program_types():
     return [{"id": r[0], "name": r[1]} for r in data]
 
 
-# 2. Programs
 @router.get("/{type_id}")
-def get_programs(type_id: int):
+def get_programs(type_id: int, user=Depends(get_current_user)):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
         SELECT id, name FROM programs
         WHERE program_type_id = %s
-        ORDER BY name;
     """, (type_id,))
 
     data = cur.fetchall()
@@ -38,16 +36,14 @@ def get_programs(type_id: int):
     return [{"id": r[0], "name": r[1]} for r in data]
 
 
-# 3. Program Titles
 @router.get("/titles/{program_id}")
-def get_titles(program_id: int):
+def get_titles(program_id: int, user=Depends(get_current_user)):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
         SELECT id, title FROM program_titles
         WHERE program_id = %s
-        ORDER BY title;
     """, (program_id,))
 
     data = cur.fetchall()
