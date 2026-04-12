@@ -26,7 +26,7 @@ export default function AdminPage() {
       try {
         // ADMIN → load students
         if (userRole === "admin") {
-          const res = await apiFetch("/students/all");
+          const res = await apiFetch("/admin/students/all");
           setStudents(res);
         }
 
