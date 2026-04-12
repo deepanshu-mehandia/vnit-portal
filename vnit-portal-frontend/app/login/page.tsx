@@ -16,7 +16,7 @@ export default function Login() {
     }
 
     try {
-      const res = await fetch("https://vnit-portal.onrender.com/login", {
+      const res = await fetch("https://vnit-portal.onrender.com/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -24,18 +24,16 @@ export default function Login() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
-
-      if (data.error) {
-        alert(data.error);
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || "Login failed");
         return;
       }
 
-      // ✅ STORE TOKEN
+      const data = await res.json();
+
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("role", data.role);
-
-      alert("Login successful");
 
       router.push("/dashboard");
 
