@@ -58,3 +58,19 @@ def get_student(student_id: int, user=Depends(get_current_user)):
     finally:
         cur.close()
         conn.close()
+
+@router.get("/students/all")
+def get_all_students(user=Depends(get_current_user)):
+    if user["role"] != "admin":
+        return {"error": "Unauthorized"}
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT student_id, name, email FROM students")
+    rows = cur.fetchall()
+
+    return [
+        {"student_id": r[0], "name": r[1], "email": r[2]}
+        for r in rows
+    ]
