@@ -200,7 +200,7 @@ def register(offering_id: int, user=Depends(get_current_user)):
 @router.get("/students/all")
 def get_all_students(user=Depends(get_current_user)):
     if user["role"] != "admin":
-        return {"error": "Unauthorized"}
+        raise HTTPException(status_code=403, detail="Admins only")
 
     conn = get_connection()
     cur = conn.cursor()
