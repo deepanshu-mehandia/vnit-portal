@@ -1,9 +1,6 @@
 import smtplib
 from email.mime.text import MIMEText
-from dotenv import load_dotenv
 import os
-
-load_dotenv()
 
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
@@ -13,7 +10,7 @@ def send_credentials_email(to_email, username, password):
         subject = "AIMS Account Created Login Credentials"
 
         body = f"""
-Dear Student,
+Dear {username.upper()},
 
 We are pleased to inform you that your account for AIMS has been successfully created.
 
@@ -23,14 +20,13 @@ Login ID: {username}
 Temporary Password: {password}
 
 Steps to access your account:
-1. Visit the portal login page
-2. Enter your credentials
-3. Change your password after login
+1. Visit the AIMS System Login Page
+2. Enter your ID and password
+3. Change password after login
 
-If you face any issues, contact the Academic Section.
+If you face any issue, contact Academic Section.
 
-Regards,
-VNIT Administration
+Thank you.
 """
 
         msg = MIMEText(body)
@@ -44,8 +40,10 @@ VNIT Administration
         server.send_message(msg)
         server.quit()
 
+        print("EMAIL SENT SUCCESSFULLY")
+
         return True
 
     except Exception as e:
-        print("EMAIL ERROR:", e)
+        print("EMAIL ERROR:", str(e))
         return False

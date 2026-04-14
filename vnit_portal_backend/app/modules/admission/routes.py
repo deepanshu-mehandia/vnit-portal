@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from app.database.connection import get_connection
 from app.core.security import hash_password
 from app.services.email import send_credentials_email
@@ -11,21 +11,19 @@ def generate_password(length=8):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 @router.post("")
-def submit_admission(data: dict):
+def submit_admission(data: dict, background_tasks: BackgroundTasks):
     conn = get_connection()
     cur = conn.cursor()
 
     username = data["email"]
 
-    # 🔍 Check if user exists
-    cur.execute("""
-        SELECT user_id FROM users WHERE username = %s
-    """, (username,))
+    # CHECK USER
+    cur.execute("SELECT user_id FROM users WHERE username = %s", (username,))
     existing_user = cur.fetchone()
 
     if existing_user:
         user_id = existing_user[0]
-        print("User already exists")
+        raw_password = None  # already exists
     else:
         raw_password = generate_password()
         hashed_password = hash_password(raw_password)
@@ -38,28 +36,22 @@ def submit_admission(data: dict):
 
         user_id = cur.fetchone()[0]
 
-        # send email only for NEW user
-        email_sent = send_credentials_email(
-            to_email=data["email"],
-            username=username,
-            password=raw_password
+        # 🔥 SEND EMAIL IN BACKGROUND
+        background_tasks.add_task(
+            send_credentials_email,
+            data["email"],
+            username,
+            raw_password
         )
 
-        if not email_sent:
-            print("Email failed but admission stored")
-
-    # 🔍 Check if student already exists
-    cur.execute("""
-        SELECT student_id FROM students WHERE user_id = %s
-    """, (user_id,))
-    existing_student = cur.fetchone()
-
-    if existing_student:
+    # CHECK STUDENT
+    cur.execute("SELECT student_id FROM students WHERE user_id = %s", (user_id,))
+    if cur.fetchone():
         cur.close()
         conn.close()
         return {"message": "You have already applied"}
 
-    # 🔹 Insert student
+    # INSERT STUDENT
     cur.execute("""
         INSERT INTO students 
         (user_id, name, email, mobile, dob, gender, category, state, address,
