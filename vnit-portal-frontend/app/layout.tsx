@@ -13,14 +13,14 @@ export default function RootLayout({
 }) {
   const pathname = usePathname();
 
-  const isAuthPage = pathname === "/login";
+  // 👉 PUBLIC PAGE (NO SIDEBAR / NAVBAR)
+  const isPublic = pathname === "/";
 
   return (
     <html lang="en">
       <body>
         <Providers>
-
-          {isAuthPage ? (
+          {isPublic ? (
             children
           ) : (
             <div className="flex h-screen overflow-hidden bg-gray-100">
@@ -29,6 +29,7 @@ export default function RootLayout({
 
               <div className="flex flex-col flex-1">
                 <Navbar />
+
                 <main className="flex-1 overflow-y-auto p-6">
                   {children}
                 </main>
@@ -36,7 +37,6 @@ export default function RootLayout({
 
             </div>
           )}
-
         </Providers>
       </body>
     </html>

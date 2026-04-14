@@ -17,13 +17,13 @@ export default function Sidebar() {
     const userRole = localStorage.getItem("role");
 
     if (!token) {
-      router.push("/");
+      router.replace("/");
       return;
     }
 
     setRole(userRole);
     setReady(true);
-  }, []);
+  }, [router]);
 
   if (!ready) return null;
 
@@ -81,7 +81,7 @@ export default function Sidebar() {
         <button
           onClick={() => {
             localStorage.clear();
-            router.push("/login");
+            router.push("/");
           }}
           className="w-full bg-red-500 py-2 rounded"
         >
