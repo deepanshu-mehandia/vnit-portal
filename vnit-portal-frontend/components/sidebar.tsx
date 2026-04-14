@@ -17,7 +17,7 @@ export default function Sidebar() {
     const userRole = localStorage.getItem("role");
 
     if (!token) {
-      router.push("/login");
+      router.push("/");
       return;
     }
 
