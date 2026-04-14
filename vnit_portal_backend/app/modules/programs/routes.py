@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends
 from app.database.connection import get_connection
-from app.core.dependencies import get_current_user
 
 router = APIRouter(prefix="/programs")
 
 @router.get("/types")
-def get_program_types(user=Depends(get_current_user)):
+def get_program_types():
     conn = get_connection()
     cur = conn.cursor()
 
@@ -19,7 +18,7 @@ def get_program_types(user=Depends(get_current_user)):
 
 
 @router.get("/{type_id}")
-def get_programs(type_id: int, user=Depends(get_current_user)):
+def get_programs(type_id: int):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -37,7 +36,7 @@ def get_programs(type_id: int, user=Depends(get_current_user)):
 
 
 @router.get("/titles/{program_id}")
-def get_titles(program_id: int, user=Depends(get_current_user)):
+def get_titles(program_id: int):
     conn = get_connection()
     cur = conn.cursor()
 
