@@ -25,7 +25,7 @@ export default function Sidebar() {
     setReady(true);
   }, [router]);
 
-  if (!ready) return null;
+  if (!role) return null;
 
   function linkClass(path: string) {
     return `block px-3 py-2 rounded-lg ${
@@ -53,7 +53,7 @@ export default function Sidebar() {
           {role === "student" && (
             <>
               <Link href="/admission" className={linkClass("/admission")}>Admission</Link>
-              <Link href="/course-registration" className={linkClass("/registration")}>Registration</Link>
+              <Link href="/course-registration" className={linkClass("/course-registration")}>Registration</Link>
               <Link href="/fees" className={linkClass("/fees")}>Fees</Link>
             </>
           )}
@@ -80,7 +80,8 @@ export default function Sidebar() {
         <button
           onClick={() => {
             localStorage.clear();
-            router.push("/");
+            router.replace("/");
+            window.location.reload();
           }}
           className="w-full bg-red-500 py-2 rounded"
         >

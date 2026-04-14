@@ -19,9 +19,6 @@ export default function Navbar() {
 
       <div className="flex items-center gap-4">
         <ThemeToggle />
-        <span className="text-sm text-gray-600 dark:text-gray-300">
-          Admin
-        </span>
       </div>
 
     </div>
