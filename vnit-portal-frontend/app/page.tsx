@@ -129,7 +129,7 @@ export default function HomePage() {
 
           {/* 🔥 NEW REGISTRATION (IMPORTANT) */}
           <button
-            onClick={() => router.push("/registration")}
+            onClick={() => router.push("/admission")}
             className="w-full border border-blue-600 text-blue-600 py-3 rounded-lg hover:bg-blue-50 transition"
           >
             New Registration
