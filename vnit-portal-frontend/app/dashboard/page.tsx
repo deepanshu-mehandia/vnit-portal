@@ -141,20 +141,6 @@ export default function Dashboard() {
               <p>Loading profile...</p>
             )}
           </div>
-
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h2 className="text-xl font-semibold">New Admission</h2>
-            <p className="text-gray-500 mt-2">
-              Apply for a new admission
-            </p>
-
-            <button
-              onClick={() => router.push("/admission")}
-              className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-            >
-              Start Admission
-            </button>
-          </div>
         </>
       )}
 
