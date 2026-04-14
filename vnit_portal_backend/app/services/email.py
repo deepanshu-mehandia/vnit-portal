@@ -12,7 +12,7 @@ def send_credentials_email(to_email, username, password):
                 "Content-Type": "application/json",
             },
             json={
-                "from": "onboarding@resend.dev",
+                "from": "VNIT Portal <onboarding@resend.dev>",
                 "to": [to_email],
                 "subject": "AIMS Account Created Login Credentials",
                 "html": f"""
