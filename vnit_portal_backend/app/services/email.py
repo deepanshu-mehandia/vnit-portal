@@ -10,18 +10,27 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 
 def send_credentials_email(to_email, username, password):
     try:
-        subject = "VNIT Portal - Login Credentials"
+        subject = "AIMS Account Created Login Credentials"
 
         body = f"""
-Welcome to VNIT Portal 🎓
+Dear Student,
 
-Your account has been created successfully.
+We are pleased to inform you that your account for AIMS has been successfully created.
 
-Username: {username}
-Password: {password}
+Below are your login credentials:
 
-Login:
-https://vnit-portal.vercel.app/login
+Login ID: {username}
+Temporary Password: {password}
+
+Steps to access your account:
+1. Visit the portal login page
+2. Enter your credentials
+3. Change your password after login
+
+If you face any issues, contact the Academic Section.
+
+Regards,
+VNIT Administration
 """
 
         msg = MIMEText(body)
