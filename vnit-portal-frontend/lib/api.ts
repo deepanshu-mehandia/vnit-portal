@@ -13,8 +13,14 @@ export async function apiFetch(endpoint: string, options: any = {}) {
   });
 
   if (res.status === 401) {
-    localStorage.removeItem("token");
+    localStorage.clear();
     window.location.href = "/login";
+    return;
+  }
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.detail || "API error");
   }
 
   return res.json();

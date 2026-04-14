@@ -15,6 +15,11 @@ export default function AdminPage() {
     const token = localStorage.getItem("token");
     const userRole = localStorage.getItem("role");
 
+    if (userRole !== "admin" && userRole !== "faculty") {
+      router.push("/dashboard");
+      return;
+    }
+
     if (!token) {
       router.push("/login");
       return;
