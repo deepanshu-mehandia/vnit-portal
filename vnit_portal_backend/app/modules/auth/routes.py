@@ -14,12 +14,13 @@ def login(data: LoginRequest):
     conn = get_connection()
     cur = conn.cursor()
 
+    # Get user
     cur.execute("""
         SELECT user_id, password, role
         FROM users
         WHERE username = %s
     """, (data.username,))
-
+    
     user = cur.fetchone()
 
     if not user:
@@ -29,6 +30,17 @@ def login(data: LoginRequest):
 
     if not verify_password(data.password, hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # 🔥 Get student_id separately
+    student_id = None
+    if role == "student":
+        cur.execute("""
+            SELECT student_id FROM students
+            WHERE user_id = %s
+        """, (user_id,))
+        student = cur.fetchone()
+        if student:
+            student_id = student[0]
 
     token = create_access_token({
         "user_id": user_id,
@@ -40,5 +52,6 @@ def login(data: LoginRequest):
 
     return {
         "access_token": token,
-        "role": role
+        "role": role,
+        "student_id": student_id   # ✅ correct now
     }

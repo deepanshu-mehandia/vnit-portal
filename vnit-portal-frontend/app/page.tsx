@@ -39,6 +39,7 @@ export default function HomePage() {
 
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("role", data.role);
+      localStorage.setItem("student_id", data.student_id);
 
       router.push("/dashboard");
     } catch (err) {
