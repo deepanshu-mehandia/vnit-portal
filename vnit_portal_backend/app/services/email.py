@@ -1,46 +1,34 @@
-import smtplib
-from email.mime.text import MIMEText
+import requests
 import os
 
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
 def send_credentials_email(to_email, username, password):
     try:
-        subject = "AIMS Account Created Login Credentials"
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": "onboarding@resend.dev",
+                "to": [to_email],
+                "subject": "AIMS Account Created Login Credentials",
+                "html": f"""
+                <p>Dear {username.upper()},</p>
 
-        body = f"""
-Dear {username.upper()},
+                <p>Your account has been created.</p>
 
-We are pleased to inform you that your account for AIMS has been successfully created.
+                <p><b>Login ID:</b> {username}<br>
+                <b>Password:</b> {password}</p>
 
-Below are your login credentials:
+                <p>Please login and change password.</p>
+                """,
+            },
+        )
 
-Login ID: {username}
-Temporary Password: {password}
-
-Steps to access your account:
-1. Visit the AIMS System Login Page
-2. Enter your ID and password
-3. Change password after login
-
-If you face any issue, contact Academic Section.
-
-Thank you.
-"""
-
-        msg = MIMEText(body)
-        msg["Subject"] = subject
-        msg["From"] = EMAIL_USER
-        msg["To"] = to_email
-
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(EMAIL_USER, EMAIL_PASS)
-        server.send_message(msg)
-        server.quit()
-
-        print("EMAIL SENT SUCCESSFULLY")
+        print("EMAIL STATUS:", response.text)
 
         return True
 
