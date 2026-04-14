@@ -16,14 +16,23 @@ def send_credentials_email(to_email, username, password):
                 "to": [to_email],
                 "subject": "AIMS Account Created Login Credentials",
                 "html": f"""
-                <p>Dear {username.upper()},</p>
+                <p>Dear {username.split('@')[0].upper()},</p>
 
-                <p>Your account has been created.</p>
+                <p>We are pleased to inform you that your account for AIMS has been successfully created.</p>
 
                 <p><b>Login ID:</b> {username}<br>
-                <b>Password:</b> {password}</p>
+                <b>Temporary Password:</b> {password}</p>
 
-                <p>Please login and change password.</p>
+                <p><b>Steps to access your account:</b></p>
+                <ol>
+                <li>Visit the AIMS Login Page</li>
+                <li>Enter your Login ID and password</li>
+                <li>Change password after first login</li>
+                </ol>
+
+                <p>If you face any issue, contact Academic Section.</p>
+
+                <p>Regards,<br>VNIT Academic Portal</p>
                 """,
             },
         )
