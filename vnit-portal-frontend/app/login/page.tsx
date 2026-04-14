@@ -58,7 +58,7 @@ export default function Login() {
       {/* LEFT IMAGE */}
       <div className="hidden md:flex w-1/2 relative">
         <Image
-          src="/public/assets/campus.jpg"
+          src="/assets/campus.jpg"
           alt="VNIT Campus"
           fill
           className="object-cover"
