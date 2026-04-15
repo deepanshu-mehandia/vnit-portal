@@ -18,7 +18,15 @@ def register_course(data: RegistrationRequest):
     student_id = data.student_id
     offering_id = data.offering_id
 
-    # 🔥 insert
+    # 🔥 check duplicate
+    cur.execute("""
+        SELECT 1 FROM registrations
+        WHERE student_id = %s AND offering_id = %s
+    """, (student_id, offering_id))
+
+    if cur.fetchone():
+        raise HTTPException(status_code=400, detail="Already registered")
+
     cur.execute("""
         INSERT INTO registrations (student_id, offering_id)
         VALUES (%s, %s)
