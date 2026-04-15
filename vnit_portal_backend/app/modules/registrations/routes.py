@@ -1,32 +1,31 @@
-from fastapi import APIRouter
+from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
 from app.database.connection import get_connection
 
 router = APIRouter(prefix="/registrations", tags=["Registrations"])
 
+
+class RegistrationRequest(BaseModel):
+    student_id: int
+    offering_id: int
+
+
 @router.post("")
-def register_course(data: dict):
+def register_course(data: RegistrationRequest):
     conn = get_connection()
     cur = conn.cursor()
 
-    student_id = data["student_id"]
-    offering_id = data["offering_id"]
+    student_id = data.student_id
+    offering_id = data.offering_id
 
-    # prevent duplicate registration
+    # 🔥 insert
     cur.execute("""
-        SELECT 1 FROM registrations 
-        WHERE student_id = %s AND offering_id = %s
-    """, (student_id, offering_id))
-
-    if cur.fetchone():
-        return {"message": "Already registered"}
-
-    cur.execute("""
-        INSERT INTO registrations (student_id, offering_id, status)
-        VALUES (%s, %s, 'pending')
+        INSERT INTO registrations (student_id, offering_id)
+        VALUES (%s, %s)
     """, (student_id, offering_id))
 
     conn.commit()
     cur.close()
     conn.close()
 
-    return {"message": "Registration successful"}
+    return {"message": "Registered successfully"}

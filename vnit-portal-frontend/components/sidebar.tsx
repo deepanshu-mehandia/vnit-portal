@@ -52,7 +52,6 @@ export default function Sidebar() {
 
           {role === "student" && (
             <>
-              <Link href="/admission" className={linkClass("/admission")}>Admission</Link>
               <Link href="/course-registration" className={linkClass("/course-registration")}>Registration</Link>
               <Link href="/fees" className={linkClass("/fees")}>Fees</Link>
             </>
