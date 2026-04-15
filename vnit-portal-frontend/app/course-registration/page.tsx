@@ -23,40 +23,61 @@ export default function CourseRegistration() {
   }, []);
 
   async function handleRegister(offering_id: number) {
-    const student_id = localStorage.getItem("student_id");
+  try {
+    const token = localStorage.getItem("token");
 
-    if (!student_id) {
+    if (!token) {
       alert("Login again");
       return;
     }
 
-    try {
-      setLoading(true);
+    // 🔥 STEP 1: get student_id from backend
+    const userRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/students/me`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/registrations`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            student_id: Number(student_id),
-            offering_id,
-          }),
-        }
-      );
-
-      const data = await res.json();
-
-      alert(data.message);
-    } catch (err) {
-      console.error(err);
-      alert("Error");
-    } finally {
-      setLoading(false);
+    if (!userRes.ok) {
+      throw new Error("Unauthorized");
     }
+
+    const userData = await userRes.json();
+    const student_id = userData.student_id;
+
+    // 🔥 STEP 2: register course
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/registrations`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          student_id,
+          offering_id,
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.detail || "Registration failed");
+      return;
+    }
+
+    alert("Registered successfully");
+
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong");
   }
+}
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
