@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Literal
 from app.database.connection import get_connection
-from app.core.auth import get_current_user
+from app.core.dependencies import get_current_user
 from datetime import date
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
