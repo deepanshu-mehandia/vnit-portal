@@ -1,23 +1,26 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import List
+from typing import List, Literal
 from app.database.connection import get_connection
 from app.core.auth import get_current_user
+from datetime import date
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
 
 class AttendanceRecord(BaseModel):
     student_id: int
-    status: str  # present / absent
+    status: Literal["present", "absent"]
 
 class AttendanceRequest(BaseModel):
     offering_id: int
-    date: str
+    date: date
     records: List[AttendanceRecord]
 
 
 @router.post("/mark")
-def mark_attendance(data: AttendanceRequest):
+def mark_attendance(data: AttendanceRequest, user=Depends(get_current_user)):
+    if user["role"] != "faculty":
+        raise HTTPException(status_code=403, detail="Only faculty allowed")
     conn = get_connection()
     cur = conn.cursor()
 
@@ -34,6 +37,13 @@ def mark_attendance(data: AttendanceRequest):
                 status_code=400,
                 detail=f"Student {record.student_id} not registered"
             )
+        cur.execute("""
+            SELECT 1 FROM course_offerings
+            WHERE offering_id = %s AND faculty_id = %s
+        """, (data.offering_id, user["user_id"]))
+
+        if not cur.fetchone():
+            raise HTTPException(status_code=403, detail="Not your course")
 
         # 🔥 INSERT (ON CONFLICT to avoid duplicates)
         cur.execute("""
