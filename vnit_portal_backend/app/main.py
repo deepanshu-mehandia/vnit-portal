@@ -8,6 +8,7 @@ from app.modules.programs.routes import router as program_router
 from app.modules.admission.routes import router as admission_router
 from app.modules.courses.routes import router as courses_router
 from app.modules.registrations.routes import router as registrations_router
+from app.modules.attendance.routes import router as attendance_router
 
 app = FastAPI()
 
@@ -26,6 +27,7 @@ app.include_router(program_router)
 app.include_router(admission_router)
 app.include_router(courses_router)
 app.include_router(registrations_router)
+app.include_router(attendance_router)
 
 @app.get("/")
 def root():
