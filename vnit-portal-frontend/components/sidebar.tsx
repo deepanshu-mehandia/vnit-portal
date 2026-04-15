@@ -51,15 +51,16 @@ export default function Sidebar() {
           {role === "student" && (
             <>
               <Link href="/course-registration" className={linkClass("/course-registration")}>Registration</Link>
-              <Link href="/attendance" className={linkClass("/attendance")}>Attendance</Link>
+              <Link href="/attendance/student" className={linkClass("/attendance/student")}>Attendance</Link>
               <Link href="/fees" className={linkClass("/fees")}>Fees</Link>
             </>
           )}
 
           {role === "faculty" && (
-            <Link href="/admin" className={linkClass("/admin")}>
-              Approvals
-            </Link>
+            <>
+              <Link href="/admin" className={linkClass("/admin")}>Approvals</Link>
+              <Link href="/attendance" className={linkClass("/attendance")}>Attendance</Link>
+            </>
           )}
 
           {role === "admin" && (
