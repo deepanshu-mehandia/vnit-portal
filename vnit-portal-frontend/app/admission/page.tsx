@@ -1,20 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
+
+const stateCityMap: any = {
+  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
+  Karnataka: ["Bangalore", "Mysore", "Hubli"],
+  Delhi: ["New Delhi"],
+  Gujarat: ["Ahmedabad", "Surat"],
+};
 
 export default function Admission() {
   const [types, setTypes] = useState<any[]>([]);
   const [programs, setPrograms] = useState<any[]>([]);
   const [titles, setTitles] = useState<any[]>([]);
 
-  const [selectedType, setSelectedType] = useState<number | "">("");
-  const [selectedProgram, setSelectedProgram] = useState<number | "">("");
-  const [selectedTitle, setSelectedTitle] = useState<number | "">("");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedProgram, setSelectedProgram] = useState("");
+  const [selectedTitle, setSelectedTitle] = useState("");
+
+  const [cities, setCities] = useState<string[]>([]);
 
   const [form, setForm] = useState({
-    name: "",
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    father_name: "",
+    mother_name: "",
     email: "",
     mobile: "",
     dob: "",
@@ -24,80 +38,55 @@ export default function Admission() {
     city: "",
     pin: "",
     address: "",
+    aadhaar: "",
+    blood_group: "",
   });
 
   const [loading, setLoading] = useState(false);
 
-  // ================= LOAD PROGRAM TYPES =================
+  // LOAD TYPES
   useEffect(() => {
     fetch(`${API}/programs/types`)
       .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setTypes(data);
-        else {
-          console.error("Invalid types response", data);
-          setTypes([]);
-        }
-      })
-      .catch(err => console.error(err));
+      .then(setTypes);
   }, []);
 
-  // ================= HANDLE TYPE =================
+  // TYPE CHANGE
   async function handleType(e: any) {
     const id = e.target.value;
-    setSelectedType(id ? Number(id) : "");
+    setSelectedType(id);
     setSelectedProgram("");
     setSelectedTitle("");
-    setPrograms([]);
-    setTitles([]);
 
-    if (!id) return;
-
-    try {
-      const res = await fetch(`${API}/programs/${id}`);
-      const data = await res.json();
-
-      if (Array.isArray(data)) setPrograms(data);
-      else setPrograms([]);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await fetch(`${API}/programs/${id}`);
+    setPrograms(await res.json());
   }
 
-  // ================= HANDLE PROGRAM =================
+  // PROGRAM CHANGE
   async function handleProgram(e: any) {
     const id = e.target.value;
-    setSelectedProgram(id ? Number(id) : "");
+    setSelectedProgram(id);
     setSelectedTitle("");
-    setTitles([]);
 
-    if (!id) return;
-
-    try {
-      const res = await fetch(`${API}/programs/titles/${id}`);
-      const data = await res.json();
-
-      if (Array.isArray(data)) setTitles(data);
-      else setTitles([]);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await fetch(`${API}/programs/titles/${id}`);
+    setTitles(await res.json());
   }
 
-  // ================= FORM UPDATE =================
+  // STATE CHANGE
+  function handleState(e: any) {
+    const state = e.target.value;
+    setForm({ ...form, state, city: "" });
+
+    setCities(stateCityMap[state] || []);
+  }
+
   function update(key: string, value: string) {
     setForm({ ...form, [key]: value });
   }
 
-  // ================= SUBMIT =================
   async function handleSubmit() {
-    if (!selectedType || !selectedProgram || !selectedTitle) {
-      alert("Select program properly");
-      return;
-    }
-
-    if (!form.name || !form.email || !form.mobile) {
-      alert("Fill required fields");
+    if (!form.first_name || !form.email || !form.mobile) {
+      toast.error("Fill required fields");
       return;
     }
 
@@ -106,9 +95,7 @@ export default function Admission() {
 
       const res = await fetch(`${API}/admission`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
           program_type_id: selectedType,
@@ -120,118 +107,113 @@ export default function Admission() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.detail || "Submission failed");
+        toast.error(data.detail || "Failed");
         return;
       }
 
-      alert(
-        `Account Created!\n\nUsername: ${data.username}\n\nCheck your email for password`
-      );
+      toast.success("Admission Successful", { duration: 2000 });
 
-      window.location.href = "/";
-    } catch (err) {
-      console.error(err);
-      alert("Server error");
+      setTimeout(() => (window.location.href = "/"), 1500);
+
+    } catch {
+      toast.error("Server error");
     } finally {
       setLoading(false);
     }
   }
 
-  // ================= RESET =================
-  function resetForm() {
-    setSelectedType("");
-    setSelectedProgram("");
-    setSelectedTitle("");
-    setPrograms([]);
-    setTitles([]);
-
-    setForm({
-      name: "",
-      email: "",
-      mobile: "",
-      dob: "",
-      gender: "",
-      category: "",
-      state: "",
-      city: "",
-      pin: "",
-      address: "",
-    });
-  }
-
   return (
-    <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-8">
+    <div className="max-w-6xl mx-auto p-8 space-y-10">
 
-      <h1 className="text-3xl font-bold">Student Admission</h1>
+      <h1 className="text-3xl font-bold">Admission Form</h1>
 
       {/* PROGRAM */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <select onChange={handleType} value={selectedType} className="input">
-          <option value="">Program Type</option>
-          {types.map(t => (
-            <option key={t.id} value={t.id}>{t.name}</option>
-          ))}
-        </select>
+      <div className="bg-white p-6 rounded-xl shadow space-y-4">
+        <h2 className="font-semibold text-lg">Program Details</h2>
 
-        <select onChange={handleProgram} value={selectedProgram} className="input">
-          <option value="">Program</option>
-          {programs.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+        <div className="grid md:grid-cols-3 gap-4">
+          <select onChange={handleType} className="input">
+            <option>Program Type</option>
+            {types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
 
-        <select onChange={(e) => setSelectedTitle(Number(e.target.value))} value={selectedTitle} className="input">
-          <option value="">Program Title</option>
-          {titles.map(t => (
-            <option key={t.id} value={t.id}>{t.title}</option>
-          ))}
-        </select>
+          <select onChange={handleProgram} className="input">
+            <option>Program</option>
+            {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+
+          <select onChange={(e)=>setSelectedTitle(e.target.value)} className="input">
+            <option>Program Title</option>
+            {titles.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* PERSONAL */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <input placeholder="Full Name" value={form.name} onChange={e => update("name", e.target.value)} className="input" />
-        <input placeholder="Email" value={form.email} onChange={e => update("email", e.target.value)} className="input" />
-        <input placeholder="Mobile" value={form.mobile} onChange={e => update("mobile", e.target.value)} className="input" />
-        <input type="date" value={form.dob} onChange={e => update("dob", e.target.value)} className="input" />
+      <div className="bg-white p-6 rounded-xl shadow space-y-4">
+        <h2 className="font-semibold text-lg">Personal Details</h2>
 
-        <select value={form.gender} onChange={e => update("gender", e.target.value)} className="input">
-          <option value="">Gender</option>
-          <option>Male</option>
-          <option>Female</option>
-        </select>
+        <div className="grid md:grid-cols-3 gap-4">
+          <input placeholder="First Name" onChange={e=>update("first_name", e.target.value)} className="input"/>
+          <input placeholder="Middle Name" onChange={e=>update("middle_name", e.target.value)} className="input"/>
+          <input placeholder="Last Name" onChange={e=>update("last_name", e.target.value)} className="input"/>
 
-        <select value={form.category} onChange={e => update("category", e.target.value)} className="input">
-          <option value="">Category</option>
-          <option>General</option>
-          <option>OBC</option>
-          <option>SC</option>
-          <option>ST</option>
-        </select>
+          <input placeholder="Father Name" onChange={e=>update("father_name", e.target.value)} className="input"/>
+          <input placeholder="Mother Name" onChange={e=>update("mother_name", e.target.value)} className="input"/>
+
+          <input placeholder="Email" onChange={e=>update("email", e.target.value)} className="input"/>
+          <input placeholder="Mobile" onChange={e=>update("mobile", e.target.value)} className="input"/>
+
+          <input type="date" onChange={e=>update("dob", e.target.value)} className="input"/>
+
+          <input placeholder="Aadhaar" onChange={e=>update("aadhaar", e.target.value)} className="input"/>
+          <input placeholder="Blood Group" onChange={e=>update("blood_group", e.target.value)} className="input"/>
+
+          <select onChange={e=>update("gender", e.target.value)} className="input">
+            <option>Gender</option>
+            <option>Male</option>
+            <option>Female</option>
+          </select>
+
+          <select onChange={e=>update("category", e.target.value)} className="input">
+            <option>Category</option>
+            <option>General</option>
+            <option>OBC</option>
+            <option>SC</option>
+            <option>ST</option>
+          </select>
+        </div>
       </div>
 
       {/* ADDRESS */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <input placeholder="State" value={form.state} onChange={e => update("state", e.target.value)} className="input" />
-        <input placeholder="City" value={form.city} onChange={e => update("city", e.target.value)} className="input" />
-        <input placeholder="PIN" value={form.pin} onChange={e => update("pin", e.target.value)} className="input" />
-        <textarea placeholder="Address" value={form.address} onChange={e => update("address", e.target.value)} className="input md:col-span-2" />
+      <div className="bg-white p-6 rounded-xl shadow space-y-4">
+        <h2 className="font-semibold text-lg">Address Details</h2>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <select onChange={handleState} className="input">
+            <option>Select State</option>
+            {Object.keys(stateCityMap).map(s => <option key={s}>{s}</option>)}
+          </select>
+
+          <select onChange={e=>update("city", e.target.value)} className="input">
+            <option>Select City</option>
+            {cities.map(c => <option key={c}>{c}</option>)}
+          </select>
+
+          <input placeholder="PIN" onChange={e=>update("pin", e.target.value)} className="input"/>
+
+          <textarea placeholder="Address" onChange={e=>update("address", e.target.value)} className="input md:col-span-2"/>
+        </div>
       </div>
 
-      {/* BUTTONS */}
-      <div className="flex justify-between">
-        <button onClick={resetForm} className="text-gray-500">
-          Reset
-        </button>
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        className="bg-green-600 text-white px-6 py-3 rounded"
+      >
+        {loading ? "Submitting..." : "Submit"}
+      </button>
 
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="bg-green-600 text-white px-6 py-2 rounded"
-        >
-          {loading ? "Submitting..." : "Submit"}
-        </button>
-      </div>
     </div>
   );
 }

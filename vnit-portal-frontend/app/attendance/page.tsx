@@ -10,7 +10,7 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses/available`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/attendance/my-courses`)
       .then(res => res.json())
       .then(setCourses);
   }, []);

@@ -53,24 +53,39 @@ def submit_admission(data: dict, background_tasks: BackgroundTasks):
 
     # INSERT STUDENT
     cur.execute("""
-        INSERT INTO students 
-        (user_id, name, email, mobile, dob, gender, category, state, address,
-         program_type_id, program_id, program_title_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (
-        user_id,
-        data["name"],
-        data["email"],
-        data["mobile"],
-        data["dob"],
-        data["gender"],
-        data["category"],
-        data["state"],
-        data["address"],
-        data["program_type_id"],
-        data["program_id"],
-        data["program_title_id"]
-    ))
+INSERT INTO students (
+    user_id,
+    first_name, middle_name, last_name,
+    father_name, mother_name,
+    email, mobile, dob,
+    gender, category,
+    state, city, pin, address,
+    aadhaar, blood_group,
+    program_type_id, program_id, program_title_id
+)
+VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+""", (
+    user_id,
+    data["first_name"],
+    data.get("middle_name"),
+    data["last_name"],
+    data["father_name"],
+    data["mother_name"],
+    data["email"],
+    data["mobile"],
+    data["dob"],
+    data["gender"],
+    data["category"],
+    data["state"],
+    data["city"],
+    data["pin"],
+    data["address"],
+    data["aadhaar"],
+    data["blood_group"],
+    data["program_type_id"],
+    data["program_id"],
+    data["program_title_id"],
+))
 
     conn.commit()
     cur.close()
