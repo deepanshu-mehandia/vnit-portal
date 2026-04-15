@@ -6,3 +6,4 @@ bcrypt==3.2.2
 passlib[bcrypt]==1.7.4
 python-jose
 requests
+react-hot-toast
