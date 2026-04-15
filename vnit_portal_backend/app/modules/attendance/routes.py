@@ -19,14 +19,35 @@ class AttendanceRequest(BaseModel):
 
 @router.post("/mark")
 def mark_attendance(data: AttendanceRequest, user=Depends(get_current_user)):
-    if user["role"] != "faculty":
-        raise HTTPException(status_code=403, detail="Only faculty allowed")
+
     conn = get_connection()
     cur = conn.cursor()
 
+    # ✅ STEP 1: get faculty_id from user_id
+    cur.execute("""
+        SELECT faculty_id FROM faculty
+        WHERE user_id = %s
+    """, (user["user_id"],))
+
+    faculty = cur.fetchone()
+
+    if not faculty:
+        raise HTTPException(status_code=403, detail="Not a faculty")
+
+    faculty_id = faculty[0]
+
+    # ✅ STEP 2: check course belongs to faculty
+    cur.execute("""
+        SELECT 1 FROM course_offerings
+        WHERE offering_id = %s AND faculty_id = %s
+    """, (data.offering_id, faculty_id))
+
+    if not cur.fetchone():
+        raise HTTPException(status_code=403, detail="Not your course")
+
+    # ✅ STEP 3: mark attendance
     for record in data.records:
 
-        # 🔥 VALIDATION: student must be registered
         cur.execute("""
             SELECT 1 FROM registrations
             WHERE student_id = %s AND offering_id = %s
@@ -37,15 +58,7 @@ def mark_attendance(data: AttendanceRequest, user=Depends(get_current_user)):
                 status_code=400,
                 detail=f"Student {record.student_id} not registered"
             )
-        cur.execute("""
-            SELECT 1 FROM course_offerings
-            WHERE offering_id = %s AND faculty_id = %s
-        """, (data.offering_id, user["user_id"]))
 
-        if not cur.fetchone():
-            raise HTTPException(status_code=403, detail="Not your course")
-
-        # 🔥 INSERT (ON CONFLICT to avoid duplicates)
         cur.execute("""
             INSERT INTO attendance (student_id, offering_id, date, status)
             VALUES (%s, %s, %s, %s)
