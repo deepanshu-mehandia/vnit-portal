@@ -46,9 +46,7 @@ export default function Sidebar() {
 
         <nav className="space-y-2 text-sm">
 
-          <Link href="/dashboard" className={linkClass("/dashboard")}>
-            Dashboard
-          </Link>
+          <Link href="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link>
 
           {role === "student" && (
             <>
