@@ -5,31 +5,30 @@ from app.database.connection import get_connection
 router = APIRouter(prefix="/students")
 
 @router.get("/me")
-def get_my_data(user=Depends(get_current_user)):
+def get_my_profile(current_user: dict = Depends(get_current_user)):
     conn = get_connection()
     cur = conn.cursor()
 
-    try:
-        cur.execute("""
-            SELECT name, email, mobile
-            FROM students
-            WHERE user_id = %s
-        """, (user["user_id"],))
+    cur.execute("""
+        SELECT student_id, name, email, mobile
+        FROM students
+        WHERE user_id = %s
+    """, (current_user["user_id"],))
 
-        row = cur.fetchone()
+    student = cur.fetchone()
 
-        if not row:
-            raise HTTPException(status_code=404, detail="Not found")
+    cur.close()
+    conn.close()
 
-        return {
-            "name": row[0],
-            "email": row[1],
-            "mobile": row[2]
-        }
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
 
-    finally:
-        cur.close()
-        conn.close()
+    return {
+        "student_id": student[0],
+        "name": student[1],
+        "email": student[2],
+        "mobile": student[3],
+    }
 
 @router.get("/{student_id}")
 def get_student(student_id: int, user=Depends(get_current_user)):
