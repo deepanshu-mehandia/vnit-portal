@@ -29,7 +29,7 @@ def get_my_profile(current_user: dict = Depends(get_current_user)):
     row = cur.fetchone()
 
     cur.close()
-    conn.close()
+    release_connection(conn)
 
     if not row:
         raise HTTPException(status_code=404, detail="Student not found")
@@ -101,4 +101,4 @@ def get_student(student_id: int, user=Depends(get_current_user)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)

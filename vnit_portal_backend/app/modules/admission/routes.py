@@ -48,7 +48,7 @@ def submit_admission(data: dict, background_tasks: BackgroundTasks):
     cur.execute("SELECT student_id FROM students WHERE user_id = %s", (user_id,))
     if cur.fetchone():
         cur.close()
-        conn.close()
+        release_connection(conn)
         return {"message": "You have already applied"}
 
     # INSERT STUDENT
@@ -89,7 +89,7 @@ VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
 
     conn.commit()
     cur.close()
-    conn.close()
+    release_connection(conn)
 
     return {
         "message": "Admission successful",

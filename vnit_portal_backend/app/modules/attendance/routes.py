@@ -86,7 +86,7 @@ def mark_attendance(data: AttendanceRequest, user=Depends(get_current_user)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)
 
 
 # ================= STUDENT ATTENDANCE =================
@@ -140,7 +140,7 @@ def get_student_attendance(user=Depends(get_current_user)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)
 
 
 # ================= GET STUDENTS FOR ATTENDANCE =================
@@ -199,7 +199,7 @@ def get_students_for_attendance(
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)
 
 
 # ================= FACULTY COURSES =================
@@ -247,4 +247,4 @@ def get_my_courses(user=Depends(get_current_user)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)

@@ -34,6 +34,6 @@ def register_course(data: RegistrationRequest):
 
     conn.commit()
     cur.close()
-    conn.close()
+    release_connection(conn)
 
     return {"message": "Registered successfully"}

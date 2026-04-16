@@ -32,4 +32,4 @@ def get_room(student_id: int, user=Depends(get_current_user)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)

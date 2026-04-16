@@ -47,7 +47,7 @@ def get_stats(user=Depends(require_admin)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)
 
 @router.post("/assign-advisor")
 def assign_advisor(data: dict, user=Depends(require_admin)):
@@ -67,7 +67,7 @@ def assign_advisor(data: dict, user=Depends(require_admin)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)
 
 
 @router.get("/faculty/students")
@@ -96,7 +96,7 @@ def get_students(user=Depends(require_faculty)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)
 
 
 @router.get("/faculty/pending")
@@ -124,7 +124,7 @@ def pending(user=Depends(require_faculty)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)
 
 
 @router.post("/faculty/approve")
@@ -144,7 +144,7 @@ def approve(data: dict, user=Depends(require_faculty)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)
 
 
 @router.post("/faculty/reject")
@@ -164,7 +164,7 @@ def reject(data: dict, user=Depends(require_faculty)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)
 
 
 @router.post("/registration/add")
@@ -195,7 +195,7 @@ def register(offering_id: int, user=Depends(get_current_user)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)
 
 @router.get("/students/all")
 def get_all_students(user=Depends(get_current_user)):

@@ -54,4 +54,4 @@ def login(data: LoginRequest):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)

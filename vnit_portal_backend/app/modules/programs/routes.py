@@ -12,7 +12,7 @@ def get_program_types():
     data = cur.fetchall()
 
     cur.close()
-    conn.close()
+    release_connection(conn)
 
     return [{"id": r[0], "name": r[1]} for r in data]
 
@@ -30,7 +30,7 @@ def get_programs(type_id: int):
     data = cur.fetchall()
 
     cur.close()
-    conn.close()
+    release_connection(conn)
 
     return [{"id": r[0], "name": r[1]} for r in data]
 
@@ -48,6 +48,6 @@ def get_titles(program_id: int):
     data = cur.fetchall()
 
     cur.close()
-    conn.close()
+    release_connection(conn)
 
     return [{"id": r[0], "title": r[1]} for r in data]

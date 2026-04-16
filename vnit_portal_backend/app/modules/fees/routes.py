@@ -29,4 +29,4 @@ def get_fee(student_id: int, user=Depends(get_current_user)):
 
     finally:
         cur.close()
-        conn.close()
+        release_connection(conn)

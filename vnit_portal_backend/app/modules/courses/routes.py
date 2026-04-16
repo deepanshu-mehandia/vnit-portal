@@ -24,7 +24,7 @@ def get_available_courses():
     data = cur.fetchall()
 
     cur.close()
-    conn.close()
+    release_connection(conn)
 
     return [
         {
