@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import toast from "react-hot-toast";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -43,8 +44,9 @@ export default function Dashboard() {
           setStudent(data);
         }
 
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
+        toast.error("Something went wrong");
       } finally {
         setLoading(false);
       }
@@ -127,22 +129,69 @@ export default function Dashboard() {
 
       {/* ================= STUDENT VIEW ================= */}
       {role === "student" && (
-        <>
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h2 className="text-xl font-semibold mb-4">My Profile</h2>
+  <>
+    <div className="bg-white p-6 rounded-xl shadow">
 
-            {student ? (
-              <div className="space-y-2 text-gray-700">
-                <p><strong>Name:</strong> {student.name}</p>
-                <p><strong>Email:</strong> {student.email}</p>
-                <p><strong>Mobile:</strong> {student.mobile}</p>
-              </div>
-            ) : (
-              <p>Loading profile...</p>
-            )}
-          </div>
-        </>
+      <h2 className="text-xl font-semibold mb-4">My Profile</h2>
+
+      {student ? (
+        <div className="grid md:grid-cols-2 gap-4 text-gray-700">
+
+          <p>
+            <strong>Full Name:</strong>{" "}
+            {[student.first_name, student.middle_name, student.last_name]
+              .filter(Boolean)
+              .join(" ")}
+          </p>
+
+          <p><strong>Email:</strong> {student.email}</p>
+          <p><strong>Mobile:</strong> {student.mobile}</p>
+          <p><strong>Gender:</strong> {student.gender}</p>
+          <p><strong>Category:</strong> {student.category}</p>
+          <p><strong>DOB:</strong> {student.dob}</p>
+
+        </div>
+      ) : (
+        <p>Loading profile...</p>
       )}
+    </div>
+
+    {/* QUICK ACTIONS */}
+    <div className="grid md:grid-cols-3 gap-4">
+
+      <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+        <h3 className="font-semibold">Course Registration</h3>
+        <button
+          onClick={() => router.push("/course-registration")}
+          className="mt-3 bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Register
+        </button>
+      </div>
+
+      <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+        <h3 className="font-semibold">My Attendance</h3>
+        <button
+          onClick={() => router.push("/attendance/student")}
+          className="mt-3 bg-green-600 text-white px-4 py-2 rounded"
+        >
+          View
+        </button>
+      </div>
+
+      <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+        <h3 className="font-semibold">Fees</h3>
+        <button
+          onClick={() => router.push("/fees")}
+          className="mt-3 bg-purple-600 text-white px-4 py-2 rounded"
+        >
+          Check
+        </button>
+      </div>
+
+    </div>
+  </>
+)}
 
       {/* ================= FACULTY VIEW ================= */}
       {role === "faculty" && (
