@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { apiFetch } from "@/utils/api";
 
 export default function AttendancePage() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -11,49 +12,45 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/attendance/my-courses`)
-      .then(res => res.json())
-      .then(setCourses);
+  apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/attendance/my-courses`)
+    .then(setCourses)
+    .catch((err) => toast.error(err.message));
   }, []);
 
   async function loadStudents(offering_id: number) {
+  try {
     setSelectedCourse(offering_id);
-    const token = localStorage.getItem("token");
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/attendance/course/${offering_id}`,{
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
 
-    const data = await res.json();
+    const data = await apiFetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/attendance/course/${offering_id}`
+    );
+
     setStudents(data);
 
-    // initialize attendance
     const initial: any = {};
     data.forEach((s: any) => {
       initial[s.student_id] = "present";
     });
     setAttendance(initial);
+
+  } catch (err: any) {
+    toast.error(err.message);
   }
+}
 
   async function submitAttendance() {
-    const token = localStorage.getItem("token");
+  try {
+    setLoading(true);
 
     const records = Object.keys(attendance).map((id) => ({
       student_id: Number(id),
       status: attendance[id],
     }));
 
-    setLoading(true);
-
-    const res = await fetch(
+    await apiFetch(
       `${process.env.NEXT_PUBLIC_API_URL}/attendance/mark`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           offering_id: selectedCourse,
           date: new Date().toISOString().split("T")[0],
@@ -62,16 +59,14 @@ export default function AttendancePage() {
       }
     );
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      toast.error(data.detail || "Failed");
-      return;
-    }
-
     toast.success("Attendance saved");
+
+  } catch (err: any) {
+    toast.error(err.message);
+  } finally {
     setLoading(false);
   }
+}
 
   return (
     <div className="p-8">
@@ -82,7 +77,7 @@ export default function AttendancePage() {
         onChange={(e) => loadStudents(Number(e.target.value))}
         className="border p-2 mb-6"
       >
-        <option>Select Course</option>
+        <option value="">Select Course</option>
         {courses.map((c) => (
           <option key={c.offering_id} value={c.offering_id}>
             {c.course_code}
