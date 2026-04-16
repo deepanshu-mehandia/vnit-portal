@@ -6,10 +6,41 @@ import toast from "react-hot-toast";
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 const stateCityMap: any = {
-  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik"],
-  Karnataka: ["Bangalore", "Mysore", "Hubli"],
-  Delhi: ["New Delhi"],
-  Gujarat: ["Ahmedabad", "Surat"],
+   "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur"],
+    "Arunachal Pradesh": ["Itanagar", "Tawang"],
+    "Assam": ["Guwahati", "Silchar", "Dibrugarh"],
+    "Bihar": ["Patna", "Gaya", "Muzaffarpur"],
+    "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur"],
+    "Goa": ["Panaji", "Margao"],
+    "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+    "Haryana": ["Gurgaon", "Faridabad", "Panipat"],
+    "Himachal Pradesh": ["Shimla", "Dharamshala"],
+    "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad"],
+    "Karnataka": ["Bangalore", "Mysore", "Hubli"],
+    "Kerala": ["Kochi", "Thiruvananthapuram", "Kozhikode"],
+    "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior"],
+    "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik"],
+    "Manipur": ["Imphal"],
+    "Meghalaya": ["Shillong"],
+    "Mizoram": ["Aizawl"],
+    "Nagaland": ["Kohima", "Dimapur"],
+    "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela"],
+    "Punjab": ["Chandigarh", "Ludhiana", "Amritsar"],
+    "Rajasthan": ["Jaipur", "Udaipur", "Jodhpur", "Kota"],
+    "Sikkim": ["Gangtok"],
+    "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai"],
+    "Telangana": ["Hyderabad", "Warangal"],
+    "Tripura": ["Agartala"],
+    "Uttar Pradesh": ["Lucknow", "Kanpur", "Noida", "Varanasi"],
+    "Uttarakhand": ["Dehradun", "Haridwar"],
+    "West Bengal": ["Kolkata", "Howrah", "Durgapur"],
+    "Delhi": ["New Delhi"],
+    "Jammu and Kashmir": ["Srinagar", "Jammu"],
+    "Ladakh": ["Leh"],
+    "Chandigarh": ["Chandigarh"],
+    "Puducherry": ["Puducherry"],
+    "Andaman and Nicobar Islands": ["Port Blair"],
+    "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Diu"]
 };
 
 export default function Admission() {
@@ -173,6 +204,7 @@ export default function Admission() {
             <option>Gender</option>
             <option>Male</option>
             <option>Female</option>
+            <option>Other</option>
           </select>
 
           <select onChange={e=>update("category", e.target.value)} className="input">
