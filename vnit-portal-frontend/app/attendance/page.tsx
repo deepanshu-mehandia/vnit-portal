@@ -18,10 +18,12 @@ export default function AttendancePage() {
 
   async function loadStudents(offering_id: number) {
     setSelectedCourse(offering_id);
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/attendance/course/${offering_id}`
-    );
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/attendance/course/${offering_id}`,{
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     const data = await res.json();
     setStudents(data);
