@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function AttendancePage() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -62,11 +63,11 @@ export default function AttendancePage() {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.detail || "Failed");
+      toast.error(data.detail || "Failed");
       return;
     }
 
-    alert("Attendance saved");
+    toast.success("Attendance saved");
     setLoading(false);
   }
 

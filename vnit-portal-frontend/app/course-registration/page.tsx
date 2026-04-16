@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function CourseRegistration() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -30,7 +31,7 @@ export default function CourseRegistration() {
     const student_id = localStorage.getItem("student_id");
 
     if (!token || !student_id) {
-      alert("Login again");
+      toast.error("Login again");
       return;
     }
 
@@ -53,14 +54,14 @@ export default function CourseRegistration() {
 
     if (!res.ok) {
       if (Array.isArray(data.detail)) {
-        alert(data.detail[0].msg);
+        toast.success(data.detail[0].msg);
       } else {
-        alert(data.detail || "Registration failed");
+        toast.error(data.detail || "Registration failed");
       }
       return;
     }
 
-    alert("Registered successfully");
+    toast.success("Registered successfully");
 
     setCourses((prev) =>
       prev.map((c) =>
@@ -72,7 +73,7 @@ export default function CourseRegistration() {
 
   } catch (err) {
     console.error(err);
-    alert("Something went wrong");
+    toast.error("Something went wrong");
   } finally {
     setLoadingId(null);
   }

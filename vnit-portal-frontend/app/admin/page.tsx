@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function AdminPage() {
       }),
     });
 
-    alert("Advisor assigned");
+    toast.success("Advisor assigned");
   }
 
   // ================= FACULTY =================
@@ -73,7 +74,7 @@ export default function AdminPage() {
       body: JSON.stringify({ reg_id }),
     });
 
-    alert("Approved");
+    toast.success("Approved");
   }
 
   async function reject(reg_id: number) {
@@ -82,7 +83,7 @@ export default function AdminPage() {
       body: JSON.stringify({ reg_id }),
     });
 
-    alert("Rejected");
+    toast.error("Rejected");
   }
 
   return (

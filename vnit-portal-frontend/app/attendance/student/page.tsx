@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function StudentAttendance() {
   const [data, setData] = useState<any[]>([]);
@@ -27,7 +28,7 @@ export default function StudentAttendance() {
       setData(result);
     } catch (err) {
       console.error(err);
-      alert("Failed to load attendance");
+      toast.error("Failed to load attendance");
     } finally {
       setLoading(false);
     }

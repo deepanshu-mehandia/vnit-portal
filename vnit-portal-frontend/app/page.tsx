@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function HomePage() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function HomePage() {
 
   async function handleLogin() {
     if (!username || !password) {
-      alert("Enter username and password");
+      toast.error("Enter username and password");
       return;
     }
 
@@ -33,7 +34,7 @@ export default function HomePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.detail || "Login failed");
+        toast.error(data.detail || "Login failed");
         return;
       }
 
@@ -44,7 +45,7 @@ export default function HomePage() {
       router.push("/dashboard");
     } catch (err) {
       console.error(err);
-      alert("Login failed");
+      toast.error("Login failed");
     } finally {
       setLoading(false);
     }
