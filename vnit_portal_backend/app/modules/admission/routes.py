@@ -23,7 +23,7 @@ def submit_admission(data: dict, background_tasks: BackgroundTasks):
 
     if existing_user:
         user_id = existing_user[0]
-        raw_password = None  # already exists
+        raw_password = "Already Registered"  # already exists
     else:
         raw_password = generate_password()
         hashed_password = hash_password(raw_password)
@@ -93,5 +93,6 @@ VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
 
     return {
         "message": "Admission successful",
-        "username": username
+        "username": username,
+        "password": raw_password
     }

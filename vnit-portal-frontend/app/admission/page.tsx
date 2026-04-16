@@ -141,6 +141,10 @@ export default function Admission() {
         toast.error(data.detail || "Failed");
         return;
       }
+      if (data.message === "You have already applied") {
+        toast.error(data.message);
+        return;
+      }
 
       toast.success("Admission Successful", { duration: 2000 });
 
