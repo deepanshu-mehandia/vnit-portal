@@ -1,57 +1,57 @@
-from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from app.database.connection import get_connection
 from app.core.security import verify_password, create_access_token
+import traceback
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
 
 class LoginRequest(BaseModel):
     username: str
     password: str
+
 
 @router.post("/login")
 def login(data: LoginRequest):
     conn = get_connection()
     cur = conn.cursor()
 
-    # Get user
-    cur.execute("""
-        SELECT user_id, password, role
-        FROM users
-        WHERE username = %s
-    """, (data.username,))
-    
-    user = cur.fetchone()
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    user_id, hashed_password, role = user
-
-    if not verify_password(data.password, hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    # 🔥 Get student_id separately
-    student_id = None
-    if role == "student":
+    try:
+        # ✅ get user
         cur.execute("""
-            SELECT student_id FROM students
-            WHERE user_id = %s
-        """, (user_id,))
-        student = cur.fetchone()
-        if student:
-            student_id = student[0]
+            SELECT user_id, username, password, role
+            FROM users
+            WHERE username = %s
+        """, (data.username,))
 
-    token = create_access_token({
-        "user_id": user_id,
-        "role": role
-    })
+        user = cur.fetchone()
 
-    cur.close()
-    conn.close()
+        if not user:
+            raise HTTPException(401, "Invalid credentials")
 
-    return {
-        "access_token": token,
-        "role": role,
-        "student_id": student_id   # ✅ correct now
-    }
+        user_id, username, hashed_password, role = user
+
+        # ✅ verify password
+        if not verify_password(data.password, hashed_password):
+            raise HTTPException(401, "Invalid credentials")
+
+        # ✅ generate token
+        token = create_access_token({
+            "user_id": user_id,
+            "role": role
+        })
+
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "role": role
+        }
+
+    except Exception:
+        print("ERROR IN /auth/login:\n", traceback.format_exc())
+        raise HTTPException(500, "Login failed")
+
+    finally:
+        cur.close()
+        conn.close()
