@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Sidebar from "../components/sidebar";
 import Navbar from "../components/navbar";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({
   children,
@@ -18,7 +19,10 @@ export default function RootLayout({
   if (isAuthPage) {
     return (
       <html lang="en">
-        <body>{children}</body>
+        <body>
+          {children}
+          <Toaster position="top-right" />
+        </body>
       </html>
     );
   }
@@ -32,6 +36,7 @@ export default function RootLayout({
             <Navbar />
             <main className="flex-1 overflow-y-auto p-6">
               {children}
+              <Toaster position="top-right" />
             </main>
           </div>
         </div>
