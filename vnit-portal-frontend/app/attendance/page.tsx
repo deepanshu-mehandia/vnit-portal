@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { apiFetch } from "@/utils/api";
+import { apiFetch } from "../utils/api";
 
 export default function AttendancePage() {
   const [courses, setCourses] = useState<any[]>([]);
