@@ -1,43 +1,42 @@
-import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import os
 
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+EMAIL = os.getenv("GMAIL_USER")
+PASSWORD = os.getenv("GMAIL_PASS")
 
 def send_credentials_email(to_email, username, password):
     try:
-        response = requests.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "from": "VNIT Portal <onboarding@resend.dev>",
-                "to": [to_email],
-                "subject": "AIMS Account Created Login Credentials",
-                "html": f"""
-                <p>Dear {username.split('@')[0].upper()},</p>
+        msg = MIMEMultipart()
+        msg["From"] = EMAIL
+        msg["To"] = to_email
+        msg["Subject"] = "AIMS Account Created - Login Credentials"
 
-                <p>We are pleased to inform you that your account for AIMS has been successfully created.</p>
+        body = f"""
+Dear {username.split('@')[0].upper()},
 
-                <p><b>Login ID:</b> {username}<br>
-                <b>Temporary Password:</b> {password}</p>
+Your VNIT Portal account has been created.
 
-                <p><b>Steps to access your account:</b></p>
-                <ol>
-                <li>Visit the AIMS Login Page</li>
-                <li>Enter your Login ID and password</li>
-                <li>Change password after first login</li>
-                </ol>
+Login ID: {username}
+Password: {password}
 
-                <p>If you face any issue, contact Academic Section.</p>
+Please login and change your password.
 
-                <p>Regards,<br>VNIT Academic Portal</p>
-                """,
-            },
-        )
+Regards,
+VNIT Portal
+"""
 
-        print("EMAIL STATUS:", response.text)
+        msg.attach(MIMEText(body, "plain"))
+
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(EMAIL, PASSWORD)
+
+        server.sendmail(EMAIL, to_email, msg.as_string())
+        server.quit()
+
+        print("EMAIL SENT SUCCESSFULLY")
 
         return True
 
