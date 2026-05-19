@@ -2,10 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optional custom styles */
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  background-color: #f1f5f9;
 }
+
 .input {
-  @apply border p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500;
+  @apply border border-slate-200 bg-slate-50 p-3 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-800 placeholder:text-slate-400;
 }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Smooth page transitions */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.4s ease both; }
+
+/* Glass card */
+.glass {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Status badges */
+.badge-approved { @apply bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-semibold; }
+.badge-pending  { @apply bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-semibold; }
+.badge-rejected { @apply bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-semibold; }
