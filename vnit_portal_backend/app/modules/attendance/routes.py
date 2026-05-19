@@ -20,42 +20,45 @@ class AttendanceRequest(BaseModel):
     records: List[AttendanceRecord]
 
 
+def _get_faculty_id(cur, user_id: int) -> int:
+    cur.execute("SELECT faculty_id FROM faculty WHERE user_id = %s", (user_id,))
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(403, "Not a faculty member")
+    return row[0]
+
+
+def _verify_course_ownership(cur, offering_id: int, faculty_id: int):
+    cur.execute("""
+        SELECT 1 FROM course_offerings
+        WHERE offering_id = %s AND faculty_id = %s
+    """, (offering_id, faculty_id))
+    if not cur.fetchone():
+        raise HTTPException(403, "This course does not belong to you")
+
+
+# ── Mark attendance ────────────────────────────────────────────
 @router.post("/mark")
 def mark_attendance(data: AttendanceRequest, user=Depends(get_current_user)):
     conn = get_connection()
-    cur = conn.cursor()
-
+    cur  = conn.cursor()
     try:
-        cur.execute(
-            "SELECT faculty_id FROM faculty WHERE user_id = %s", (user["user_id"],)
-        )
-        faculty = cur.fetchone()
-        if not faculty:
-            raise HTTPException(status_code=403, detail="Not a faculty")
-
-        faculty_id = faculty[0]
-
-        cur.execute("""
-            SELECT 1 FROM course_offerings
-            WHERE offering_id = %s AND faculty_id = %s
-        """, (data.offering_id, faculty_id))
-
-        if not cur.fetchone():
-            raise HTTPException(status_code=403, detail="Not your course")
+        faculty_id = _get_faculty_id(cur, user["user_id"])
+        _verify_course_ownership(cur, data.offering_id, faculty_id)
 
         for record in data.records:
             cur.execute("""
                 SELECT 1 FROM registrations
                 WHERE student_id = %s AND offering_id = %s
             """, (record.student_id, data.offering_id))
-
             if not cur.fetchone():
                 raise HTTPException(
-                    status_code=400,
-                    detail=f"Student {record.student_id} not registered for this course",
+                    400, f"Student {record.student_id} is not registered for this course"
                 )
 
-            # Upsert — requires the unique constraint added in the SQL migration above
+            # Upsert – needs unique constraint:
+            # ALTER TABLE attendance ADD CONSTRAINT uq_att
+            # UNIQUE (student_id, offering_id, date);
             cur.execute("""
                 INSERT INTO attendance (student_id, offering_id, date, status)
                 VALUES (%s, %s, %s, %s)
@@ -64,34 +67,59 @@ def mark_attendance(data: AttendanceRequest, user=Depends(get_current_user)):
             """, (record.student_id, data.offering_id, data.date, record.status))
 
         conn.commit()
-        return {"message": "Attendance saved"}
+        return {"message": "Attendance saved successfully"}
 
     except HTTPException:
         raise
     except Exception:
         conn.rollback()
-        print("ERROR IN /attendance/mark:\n", traceback.format_exc())
+        print("ERROR /attendance/mark:\n", traceback.format_exc())
         raise HTTPException(500, "Server error")
-
     finally:
         cur.close()
         release_connection(conn)
 
 
+# ── Get existing marks for a date (so faculty can edit) ────────
+@router.get("/course/{offering_id}/marks/{date_str}")
+def get_marks_for_date(offering_id: int, date_str: str, user=Depends(get_current_user)):
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        faculty_id = _get_faculty_id(cur, user["user_id"])
+        _verify_course_ownership(cur, offering_id, faculty_id)
+
+        cur.execute("""
+            SELECT student_id, status FROM attendance
+            WHERE offering_id = %s AND date = %s
+        """, (offering_id, date_str))
+
+        # Returns {student_id: status} mapping
+        return {row[0]: row[1] for row in cur.fetchall()}
+
+    except HTTPException:
+        raise
+    except Exception:
+        print("ERROR /attendance/marks:\n", traceback.format_exc())
+        raise HTTPException(500, "Server error")
+    finally:
+        cur.close()
+        release_connection(conn)
+
+
+# ── Student attendance summary ─────────────────────────────────
 @router.get("/student")
 def get_student_attendance(user=Depends(get_current_user)):
     conn = get_connection()
-    cur = conn.cursor()
-
+    cur  = conn.cursor()
     try:
         cur.execute(
             "SELECT student_id FROM students WHERE user_id = %s", (user["user_id"],)
         )
-        student = cur.fetchone()
-        if not student:
-            raise HTTPException(status_code=404, detail="Student not found")
-
-        student_id = student[0]
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Student not found")
+        student_id = row[0]
 
         cur.execute("""
             SELECT c.course_code, c.course_name,
@@ -99,118 +127,100 @@ def get_student_attendance(user=Depends(get_current_user)):
                    COUNT(*) AS total
             FROM attendance a
             JOIN course_offerings co ON a.offering_id = co.offering_id
-            JOIN courses c ON co.course_id = c.course_id
+            JOIN courses c           ON co.course_id  = c.course_id
             WHERE a.student_id = %s
             GROUP BY c.course_code, c.course_name
+            ORDER BY c.course_code
         """, (student_id,))
 
-        data = cur.fetchall()
         return [
             {
                 "course_code": d[0],
                 "course_name": d[1],
-                "present": d[2],
-                "total": d[3],
-                "percentage": round((d[2] / d[3]) * 100, 2) if d[3] else 0,
+                "present":     d[2],
+                "total":       d[3],
+                "percentage":  round((d[2] / d[3]) * 100, 2) if d[3] else 0,
             }
-            for d in data
+            for d in cur.fetchall()
         ]
 
     except HTTPException:
         raise
     except Exception:
-        print("ERROR IN /attendance/student:\n", traceback.format_exc())
+        print("ERROR /attendance/student:\n", traceback.format_exc())
         raise HTTPException(500, "Server error")
-
     finally:
         cur.close()
         release_connection(conn)
 
 
+# ── Students enrolled in a course (for marking) ────────────────
 @router.get("/course/{offering_id}")
-def get_students_for_attendance(offering_id: int, user=Depends(get_current_user)):
+def get_students_for_course(offering_id: int, user=Depends(get_current_user)):
     conn = get_connection()
-    cur = conn.cursor()
-
+    cur  = conn.cursor()
     try:
-        cur.execute(
-            "SELECT faculty_id FROM faculty WHERE user_id = %s", (user["user_id"],)
-        )
-        faculty = cur.fetchone()
-        if not faculty:
-            raise HTTPException(status_code=403, detail="Not a faculty")
-
-        faculty_id = faculty[0]
+        faculty_id = _get_faculty_id(cur, user["user_id"])
+        _verify_course_ownership(cur, offering_id, faculty_id)
 
         cur.execute("""
-            SELECT 1 FROM course_offerings
-            WHERE offering_id = %s AND faculty_id = %s
-        """, (offering_id, faculty_id))
-
-        if not cur.fetchone():
-            raise HTTPException(status_code=403, detail="Not your course")
-
-        cur.execute("""
-            SELECT s.student_id, s.first_name, s.last_name
+            SELECT s.student_id, s.first_name, s.last_name, s.roll_number
             FROM registrations r
             JOIN students s ON r.student_id = s.student_id
             WHERE r.offering_id = %s
+            ORDER BY s.first_name
         """, (offering_id,))
 
-        students = cur.fetchall()
         return [
             {
-                "student_id": s[0],
-                "name": f"{s[1] or ''} {s[2] or ''}".strip(),
+                "student_id":  s[0],
+                "name":        f"{s[1] or ''} {s[2] or ''}".strip(),
+                "roll_number": s[3],
             }
-            for s in students
+            for s in cur.fetchall()
         ]
 
     except HTTPException:
         raise
     except Exception:
-        print("ERROR IN /attendance/course:\n", traceback.format_exc())
+        print("ERROR /attendance/course:\n", traceback.format_exc())
         raise HTTPException(500, "Server error")
-
     finally:
         cur.close()
         release_connection(conn)
 
 
+# ── Faculty's own courses ──────────────────────────────────────
 @router.get("/my-courses")
 def get_my_courses(user=Depends(get_current_user)):
     conn = get_connection()
-    cur = conn.cursor()
-
+    cur  = conn.cursor()
     try:
-        cur.execute(
-            "SELECT faculty_id FROM faculty WHERE user_id = %s", (user["user_id"],)
-        )
-        faculty = cur.fetchone()
-        if not faculty:
-            raise HTTPException(403, "Not faculty")
-
-        faculty_id = faculty[0]
+        faculty_id = _get_faculty_id(cur, user["user_id"])
 
         cur.execute("""
-            SELECT co.offering_id, c.course_code, c.course_name
+            SELECT co.offering_id, c.course_code, c.course_name, c.credits
             FROM course_offerings co
             JOIN courses c ON co.course_id = c.course_id
             WHERE co.faculty_id = %s
+            ORDER BY c.course_code
         """, (faculty_id,))
 
-        data = cur.fetchall()
         return [
-            {"offering_id": d[0], "course_code": d[1], "course_name": d[2]}
-            for d in data
+            {
+                "offering_id": d[0],
+                "course_code": d[1],
+                "course_name": d[2],
+                "credits":     d[3],
+            }
+            for d in cur.fetchall()
         ]
 
     except HTTPException:
         raise
     except Exception:
-        print("ERROR IN /attendance/my-courses:\n", traceback.format_exc())
+        print("ERROR /attendance/my-courses:\n", traceback.format_exc())
         raise HTTPException(500, "Server error")
-
     finally:
         cur.close()
         release_connection(conn)

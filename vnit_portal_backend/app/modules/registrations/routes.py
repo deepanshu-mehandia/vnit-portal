@@ -11,36 +11,77 @@ class RegistrationRequest(BaseModel):
     offering_id: int
 
 
+@router.get("/my")
+def get_my_registrations(user=Depends(get_current_user)):
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT student_id FROM students WHERE user_id = %s", (user["user_id"],)
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Student not found")
+        student_id = row[0]
+
+        cur.execute("""
+            SELECT r.reg_id, r.status, r.offering_id,
+                   c.course_code, c.course_name, c.credits, c.course_type,
+                   f.name  AS faculty_name,
+                   co.capacity
+            FROM registrations r
+            JOIN course_offerings co ON r.offering_id = co.offering_id
+            JOIN courses c  ON co.course_id  = c.course_id
+            JOIN faculty f  ON co.faculty_id = f.faculty_id
+            WHERE r.student_id = %s
+            ORDER BY c.course_code
+        """, (student_id,))
+
+        rows = cur.fetchall()
+        return [
+            {
+                "reg_id":      r[0],
+                "status":      r[1],
+                "offering_id": r[2],
+                "course_code": r[3],
+                "course_name": r[4],
+                "credits":     r[5],
+                "course_type": r[6],
+                "faculty":     r[7],
+                "capacity":    r[8],
+            }
+            for r in rows
+        ]
+    finally:
+        cur.close()
+        release_connection(conn)
+
+
 @router.post("")
 def register_course(data: RegistrationRequest, user=Depends(get_current_user)):
     conn = get_connection()
     cur = conn.cursor()
-
     try:
-        # Verify the student_id belongs to the calling user
         cur.execute(
             "SELECT student_id FROM students WHERE user_id = %s", (user["user_id"],)
         )
         row = cur.fetchone()
         if not row or row[0] != data.student_id:
-            raise HTTPException(status_code=403, detail="Unauthorized")
+            raise HTTPException(403, "Unauthorized")
 
         cur.execute("""
             SELECT 1 FROM registrations
             WHERE student_id = %s AND offering_id = %s
         """, (data.student_id, data.offering_id))
-
         if cur.fetchone():
-            raise HTTPException(status_code=400, detail="Already registered")
+            raise HTTPException(400, "Already registered for this course")
 
-        cur.execute("""
-            INSERT INTO registrations (student_id, offering_id)
-            VALUES (%s, %s)
-        """, (data.student_id, data.offering_id))
-
+        cur.execute(
+            "INSERT INTO registrations (student_id, offering_id) VALUES (%s, %s)",
+            (data.student_id, data.offering_id),
+        )
         conn.commit()
         return {"message": "Registered successfully"}
-
     finally:
         cur.close()
         release_connection(conn)
