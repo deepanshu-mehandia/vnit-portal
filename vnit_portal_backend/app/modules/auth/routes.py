@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from app.database.connection import get_connection
+from app.database.connection import get_connection, release_connection
 from app.core.security import verify_password, create_access_token
 import traceback
 
@@ -18,7 +18,6 @@ def login(data: LoginRequest):
     cur = conn.cursor()
 
     try:
-        # ✅ get user
         cur.execute("""
             SELECT user_id, username, password, role
             FROM users
@@ -32,22 +31,30 @@ def login(data: LoginRequest):
 
         user_id, username, hashed_password, role = user
 
-        # ✅ verify password
         if not verify_password(data.password, hashed_password):
             raise HTTPException(401, "Invalid credentials")
 
-        # ✅ generate token
-        token = create_access_token({
-            "user_id": user_id,
-            "role": role
-        })
+        token = create_access_token({"user_id": user_id, "role": role})
+
+        # Fetch student_id if student role
+        student_id = None
+        if role == "student":
+            cur.execute(
+                "SELECT student_id FROM students WHERE user_id = %s", (user_id,)
+            )
+            row = cur.fetchone()
+            if row:
+                student_id = row[0]
 
         return {
             "access_token": token,
             "token_type": "bearer",
-            "role": role
+            "role": role,
+            "student_id": student_id,
         }
 
+    except HTTPException:
+        raise
     except Exception:
         print("ERROR IN /auth/login:\n", traceback.format_exc())
         raise HTTPException(500, "Login failed")

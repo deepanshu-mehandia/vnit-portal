@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends
-from app.database.connection import get_connection
+from app.database.connection import get_connection, release_connection
 from app.core.dependencies import get_current_user
 
 router = APIRouter(prefix="/hostel")
+
 
 @router.get("/room/{student_id}")
 def get_room(student_id: int, user=Depends(get_current_user)):
@@ -24,11 +25,7 @@ def get_room(student_id: int, user=Depends(get_current_user)):
         if not row:
             return {"room": "not allocated"}
 
-        return {
-            "room": row[0],
-            "block": row[1],
-            "hostel": row[2]
-        }
+        return {"room": row[0], "block": row[1], "hostel": row[2]}
 
     finally:
         cur.close()
