@@ -32,10 +32,14 @@ export default function HomePage() {
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
-      if (!res.ok) { toast.error(data.detail || "Login failed"); return; }
+      if (!res.ok) {
+        toast.error(data.detail || "Login failed");
+        return;
+      }
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("role", data.role);
-      if (data.student_id) localStorage.setItem("student_id", String(data.student_id));
+      if (data.student_id)
+        localStorage.setItem("student_id", String(data.student_id));
       toast.success("Welcome back!");
       router.push("/dashboard");
     } catch {
@@ -47,15 +51,22 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex">
-      <Image src="/assets/vnit.png" alt="VNIT Campus" fill className="object-cover" priority />
       {/* ───── LEFT PANEL ───── */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
-        
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-950/92 via-blue-900/85 to-indigo-950/90" />
+        {/* Changed: Removed blur-sm to make the image appear clearly on the complete panel */}
+        <Image
+          src="/assets/vnit.png"
+          alt="VNIT Campus"
+          fill
+          className="object-cover"
+          priority
+        />
+        {/* Changed: Lightened the gradient overlay to make the image more visible while still allowing text to be readable */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-950/60 via-blue-900/50 to-indigo-950/55" />
 
-        {/* Decorative circles */}
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
+        {/* Decorative circles - slightly increased opacity of glow effect to complement the new gradient */}
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl" />
 
         <div className="relative z-10 flex flex-col justify-between p-14 text-white w-full">
           {/* Logo */}
@@ -70,7 +81,9 @@ export default function HomePage() {
             </div>
             <div>
               <p className="font-bold text-base tracking-wide">VNIT Nagpur</p>
-              <p className="text-blue-300 text-xs tracking-widest uppercase">AIMS Portal</p>
+              <p className="text-blue-300 text-xs tracking-widest uppercase">
+                AIMS Portal
+              </p>
             </div>
           </motion.div>
 
@@ -91,7 +104,8 @@ export default function HomePage() {
               Here.
             </h1>
             <p className="text-blue-200/80 text-lg max-w-sm leading-relaxed">
-              Track attendance, register courses, manage fees, and view results — all in one place.
+              Track attendance, register courses, manage fees, and view results
+              — all in one place.
             </p>
           </motion.div>
 
@@ -111,7 +125,9 @@ export default function HomePage() {
                 className="text-center p-4 bg-white/5 rounded-2xl border border-white/10"
               >
                 <p className="text-3xl font-black">{s.value}</p>
-                <p className="text-blue-300 text-xs mt-1 font-medium">{s.label}</p>
+                <p className="text-blue-300 text-xs mt-1 font-medium">
+                  {s.label}
+                </p>
               </motion.div>
             ))}
           </motion.div>
@@ -142,8 +158,12 @@ export default function HomePage() {
           {/* Card */}
           <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200 p-8 border border-slate-100">
             <div className="mb-8">
-              <h2 className="text-2xl font-black text-slate-800 mb-1">Welcome back 👋</h2>
-              <p className="text-slate-500">Sign in to continue to your portal</p>
+              <h2 className="text-2xl font-black text-slate-800 mb-1">
+                Welcome back 👋
+              </h2>
+              <p className="text-slate-500">
+                Sign in to continue to your portal
+              </p>
             </div>
 
             <div className="space-y-4">
@@ -192,18 +212,37 @@ export default function HomePage() {
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
                     </svg>
                     Signing in...
                   </span>
-                ) : "Sign In →"}
+                ) : (
+                  "Sign In →"
+                )}
               </motion.button>
             </div>
 
             <div className="mt-6 pt-6 border-t border-slate-100">
-              <p className="text-center text-slate-400 text-sm mb-3">New student?</p>
+              <p className="text-center text-slate-400 text-sm mb-3">
+                New student?
+              </p>
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={() => router.push("/admission")}
