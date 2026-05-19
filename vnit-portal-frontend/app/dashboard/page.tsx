@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import {
   BookOpen, CalendarCheck, Wallet, UserCircle,
   ClipboardList, Users, TrendingUp, CheckCircle,
-  Clock, ChevronRight, GraduationCap, MapPin,
+  Clock, ChevronRight, GraduationCap, MapPin, ShieldCheck
 } from "lucide-react";
 
 /* ─── tiny helpers ──────────────────────────────────────────── */
