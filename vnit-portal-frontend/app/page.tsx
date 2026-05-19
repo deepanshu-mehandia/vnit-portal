@@ -47,9 +47,10 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex">
+      <Image src="/assets/vnit.png" alt="VNIT Campus" fill className="object-cover" priority />
       {/* ───── LEFT PANEL ───── */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
-        <Image src="/assets/campus.jpg" alt="VNIT Campus" fill className="object-cover blur-sm" priority />
+        
         <div className="absolute inset-0 bg-gradient-to-br from-blue-950/92 via-blue-900/85 to-indigo-950/90" />
 
         {/* Decorative circles */}
