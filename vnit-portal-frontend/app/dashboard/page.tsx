@@ -7,24 +7,19 @@ import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import {
   BookOpen, CalendarCheck, Wallet, UserCircle,
-  ClipboardList, Users, TrendingUp, CheckCircle,
-  Clock, ChevronRight, GraduationCap, MapPin, ShieldCheck
+  ClipboardList, Users, CheckCircle, Clock, ChevronRight,
+  GraduationCap, MapPin, Award, Home,
 } from "lucide-react";
 
-/* ─── tiny helpers ──────────────────────────────────────────── */
 const card = (i = 0) => ({
-  initial:    { opacity: 0, y: 20 },
-  animate:    { opacity: 1, y: 0  },
+  initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 },
   transition: { duration: 0.4, delay: i * 0.07 },
 });
 
-function StatCard({
-  label, value, sub, icon: Icon, gradient, i = 0,
-}: { label: string; value: string | number; sub?: string; icon: any; gradient: string; i?: number }) {
+function StatCard({ label, value, sub, icon: Icon, gradient, i = 0 }:
+  { label: string; value: string | number; sub?: string; icon: any; gradient: string; i?: number }) {
   return (
-    <motion.div {...card(i)}
-      className={`rounded-2xl p-5 text-white relative overflow-hidden shadow-lg ${gradient}`}
-    >
+    <motion.div {...card(i)} className={`rounded-2xl p-5 text-white relative overflow-hidden shadow-lg ${gradient}`}>
       <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full" />
       <div className="absolute -right-2 -bottom-6 w-28 h-28 bg-white/5 rounded-full" />
       <div className="relative">
@@ -39,9 +34,8 @@ function StatCard({
   );
 }
 
-function QuickAction({
-  label, desc, href, icon: Icon, color, i = 0,
-}: { label: string; desc: string; href: string; icon: any; color: string; i?: number }) {
+function QuickAction({ label, desc, href, icon: Icon, color, i = 0 }:
+  { label: string; desc: string; href: string; icon: any; color: string; i?: number }) {
   const router = useRouter();
   return (
     <motion.div {...card(i)} whileHover={{ y: -3 }}
@@ -60,14 +54,15 @@ function QuickAction({
   );
 }
 
-/* ─── Main component ─────────────────────────────────────────── */
 export default function Dashboard() {
   const router = useRouter();
-  const [role,      setRole]      = useState<string | null>(null);
-  const [loading,   setLoading]   = useState(true);
-  const [student,   setStudent]   = useState<any>(null);
-  const [attendance,setAttendance]= useState<any[]>([]);
-  const [stats,     setStats]     = useState({ total: 0, approved: 0, pending: 0 });
+  const [role,        setRole]        = useState<string | null>(null);
+  const [loading,     setLoading]     = useState(true);
+  const [student,     setStudent]     = useState<any>(null);
+  const [attendance,  setAttendance]  = useState<any[]>([]);
+  const [registrations, setRegs]      = useState<any[]>([]);
+  const [session,     setSessionInfo] = useState<any>(null);
+  const [stats,       setStats]       = useState({ total: 0, approved: 0, pending: 0 });
 
   useEffect(() => {
     const token    = localStorage.getItem("token");
@@ -77,26 +72,38 @@ export default function Dashboard() {
 
     async function load() {
       try {
+        // Always fetch current session
+        const sess = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/session/current`)
+          .then(r => r.json()).catch(() => null);
+        if (sess) {
+          setSessionInfo(sess);
+          localStorage.setItem("current_semester", String(sess.semester));
+          localStorage.setItem("short_session", sess.short_label);
+        }
+
         if (userRole === "admin") {
           const d = await apiFetch("/admin/stats");
           setStats(d);
         }
+
         if (userRole === "student") {
-          const [prof, att] = await Promise.all([
+          const [prof, att, regs] = await Promise.all([
             apiFetch("/students/me"),
             apiFetch("/attendance/student").catch(() => []),
+            apiFetch("/registrations/my").catch(() => []),
           ]);
           setStudent(prof);
           setAttendance(att || []);
-          // Cache name for navbar
+          setRegs(regs || []);
           if (prof?.first_name)
             localStorage.setItem("user_name", `${prof.first_name} ${prof.last_name || ""}`.trim());
         }
+
         if (userRole === "faculty") {
           const courses = await apiFetch("/attendance/my-courses").catch(() => []);
           setStudent({ courses });
         }
-      } catch (e: any) {
+      } catch {
         toast.error("Failed to load data");
       } finally {
         setLoading(false);
@@ -116,26 +123,24 @@ export default function Dashboard() {
 
   /* ── STUDENT VIEW ── */
   if (role === "student" && student) {
-    const avgAttendance = attendance.length
+    const avgAtt   = attendance.length
       ? Math.round(attendance.reduce((a: number, c: any) => a + c.percentage, 0) / attendance.length)
       : null;
+    const approved = registrations.filter(r => r.status === "approved").length;
+    const credits  = registrations.filter(r => r.status === "approved")
+      .reduce((s, r) => s + (r.credits || 0), 0);
 
     return (
       <div className="space-y-6 pb-8">
-        {/* Hero Banner */}
+        {/* Hero */}
         <motion.div {...card(0)}
           className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-7 text-white relative overflow-hidden shadow-xl shadow-blue-500/20"
         >
           <div className="absolute right-0 top-0 w-72 h-72 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute right-24 bottom-0 w-40 h-40 bg-indigo-400/10 rounded-full translate-y-1/2" />
           <div className="relative flex items-start justify-between flex-wrap gap-4">
             <div>
-              <p className="text-blue-200 text-sm font-semibold uppercase tracking-wider mb-1">
-                Welcome back 👋
-              </p>
-              <h2 className="text-3xl font-black mb-1">
-                {student.first_name} {student.last_name}
-              </h2>
+              <p className="text-blue-200 text-sm font-semibold uppercase tracking-wider mb-1">Welcome back 👋</p>
+              <h2 className="text-3xl font-black mb-1">{student.first_name} {student.last_name}</h2>
               <div className="flex flex-wrap items-center gap-3 mt-3">
                 <span className="bg-white/15 backdrop-blur px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
                   <GraduationCap size={12} /> {student.roll_number}
@@ -151,40 +156,48 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-blue-200 text-xs">Academic Year</p>
-              <p className="font-bold text-lg">2025 – 26</p>
-              <p className="text-blue-200 text-xs mt-1">Semester I</p>
+              {session && (
+                <>
+                  <p className="text-blue-200 text-xs">{session.year}</p>
+                  <p className="font-bold text-base">{session.session}</p>
+                  <p className="text-blue-300 text-xs mt-0.5">
+                    {session.semester === 1 ? "Odd Semester" : "Even Semester"}
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </motion.div>
 
-        {/* Stat Cards */}
+        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard i={1} label="Courses"   value={attendance.length || "—"} sub="Registered this sem"
-            icon={BookOpen} gradient="bg-gradient-to-br from-blue-500 to-blue-700" />
-          <StatCard i={2} label="Attendance" value={avgAttendance !== null ? `${avgAttendance}%` : "—"}
-            sub={avgAttendance !== null ? (avgAttendance >= 75 ? "Good standing" : "Needs attention") : "No data yet"}
-            icon={CalendarCheck} gradient={`bg-gradient-to-br ${avgAttendance !== null && avgAttendance < 75 ? "from-rose-500 to-red-600" : "from-emerald-500 to-teal-600"}`} />
-          <StatCard i={3} label="Category"  value={student.category || "—"} sub="Reservation category"
-            icon={UserCircle} gradient="bg-gradient-to-br from-violet-500 to-purple-700" />
-          <StatCard i={4} label="Advisor"   value="Ashish Tiwari" sub="Faculty Advisor"
-            icon={Users} gradient="bg-gradient-to-br from-amber-500 to-orange-600" />
+          <StatCard i={1} label="Courses"    value={approved}                  sub="Approved this sem"
+            icon={BookOpen}      gradient="bg-gradient-to-br from-blue-500 to-blue-700" />
+          <StatCard i={2} label="Credits"    value={credits}                   sub="Total approved"
+            icon={Award}         gradient="bg-gradient-to-br from-violet-500 to-purple-700" />
+          <StatCard i={3} label="Attendance" value={avgAtt !== null ? `${avgAtt}%` : "—"}
+            sub={avgAtt !== null ? (avgAtt >= 75 ? "Good standing" : "Needs attention") : "No data"}
+            icon={CalendarCheck} gradient={`bg-gradient-to-br ${avgAtt !== null && avgAtt < 75 ? "from-rose-500 to-red-600" : "from-emerald-500 to-teal-600"}`} />
+          <StatCard i={4} label="Category"   value={student.category || "—"}  sub="Reservation"
+            icon={UserCircle}    gradient="bg-gradient-to-br from-amber-500 to-orange-600" />
         </div>
 
         {/* Quick Actions */}
         <div>
           <h3 className="font-black text-slate-800 mb-4 text-lg">Quick Actions</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <QuickAction i={5} label="My Profile"    desc="View your details"      href="/students"            icon={UserCircle}    color="bg-blue-100 text-blue-600" />
-            <QuickAction i={6} label="Courses"       desc="Register for courses"   href="/course-registration" icon={BookOpen}      color="bg-indigo-100 text-indigo-600" />
-            <QuickAction i={7} label="Attendance"    desc="Track your attendance"  href="/attendance/student"  icon={CalendarCheck} color="bg-emerald-100 text-emerald-600" />
-            <QuickAction i={8} label="Fee Management"desc="View & pay fees"        href="/fees"                icon={Wallet}        color="bg-amber-100 text-amber-600" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <QuickAction i={5} label="My Profile"    desc="View your details"     href="/students"            icon={UserCircle}    color="bg-blue-100 text-blue-600" />
+            <QuickAction i={6} label="Courses"       desc="Register for courses"  href="/course-registration" icon={BookOpen}      color="bg-indigo-100 text-indigo-600" />
+            <QuickAction i={7} label="Attendance"    desc="Track attendance"      href="/attendance/student"  icon={CalendarCheck} color="bg-emerald-100 text-emerald-600" />
+            <QuickAction i={8} label="My Marks"      desc="View exam marks"       href="/marks"               icon={Award}         color="bg-violet-100 text-violet-600" />
+            <QuickAction i={9} label="Fees"          desc="View fee demands"      href="/fees"                icon={Wallet}        color="bg-amber-100 text-amber-600" />
+            <QuickAction i={10} label="Hostel"       desc="Room allocation"       href="/hostel"              icon={Home}          color="bg-teal-100 text-teal-600" />
           </div>
         </div>
 
         {/* Attendance Summary */}
         {attendance.length > 0 && (
-          <motion.div {...card(9)}>
+          <motion.div {...card(11)}>
             <h3 className="font-black text-slate-800 mb-4 text-lg">Attendance Summary</h3>
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
               {attendance.map((c: any, idx: number) => {
@@ -192,10 +205,8 @@ export default function Dashboard() {
                 const color = pct >= 75 ? "bg-emerald-500" : pct >= 60 ? "bg-amber-400" : "bg-red-500";
                 const textColor = pct >= 75 ? "text-emerald-600" : pct >= 60 ? "text-amber-600" : "text-red-600";
                 return (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
+                  <motion.div key={idx}
+                    initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     className="flex items-center gap-4 px-5 py-3.5 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition"
                   >
@@ -206,8 +217,7 @@ export default function Dashboard() {
                     <div className="flex items-center gap-3">
                       <div className="w-24 bg-slate-100 rounded-full h-1.5">
                         <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
+                          initial={{ width: 0 }} animate={{ width: `${pct}%` }}
                           transition={{ duration: 0.8, delay: idx * 0.1 }}
                           className={`h-1.5 rounded-full ${color}`}
                         />
@@ -233,16 +243,14 @@ export default function Dashboard() {
           <h2 className="text-3xl font-black">System Overview</h2>
           <p className="text-slate-400 mt-1 text-sm">Manage students, faculty and approvals</p>
         </motion.div>
-
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard i={1} label="Total Students" value={stats.total}    sub="All enrolled" icon={Users}        gradient="bg-gradient-to-br from-blue-500 to-indigo-700" />
-          <StatCard i={2} label="Approved"        value={stats.approved} sub="Registrations" icon={CheckCircle} gradient="bg-gradient-to-br from-emerald-500 to-teal-600" />
-          <StatCard i={3} label="Pending"          value={stats.pending}  sub="Awaiting action" icon={Clock}     gradient="bg-gradient-to-br from-amber-500 to-orange-600" />
+          <StatCard i={1} label="Total Students" value={stats.total}    sub="All enrolled"   icon={Users}        gradient="bg-gradient-to-br from-blue-500 to-indigo-700" />
+          <StatCard i={2} label="Approved"        value={stats.approved} sub="Registrations"  icon={CheckCircle}  gradient="bg-gradient-to-br from-emerald-500 to-teal-600" />
+          <StatCard i={3} label="Pending"          value={stats.pending}  sub="Awaiting action" icon={Clock}       gradient="bg-gradient-to-br from-amber-500 to-orange-600" />
         </div>
-
         <div className="grid grid-cols-2 gap-4">
-          <QuickAction i={4} label="Admin Panel" desc="Manage students & faculty"  href="/admin"    icon={ShieldCheck}   color="bg-slate-100 text-slate-700" />
-          <QuickAction i={5} label="All Students" desc="View all student records" href="/students" icon={Users}         color="bg-blue-100 text-blue-600" />
+          <QuickAction i={4} label="Students"   desc="All student records" href="/admin"         icon={Users}    color="bg-blue-100 text-blue-600" />
+          <QuickAction i={5} label="Faculty"    desc="All faculty & courses" href="/admin/faculty" icon={UserCircle} color="bg-violet-100 text-violet-600" />
         </div>
       </div>
     );
@@ -258,14 +266,13 @@ export default function Dashboard() {
           <h2 className="text-3xl font-black">Welcome, Professor</h2>
           <p className="text-indigo-200 mt-1 text-sm">Manage your courses and student approvals</p>
         </motion.div>
-
         <div className="grid grid-cols-2 gap-4">
-          <QuickAction i={1} label="Pending Approvals" desc="Review registrations"  href="/admin"     icon={ClipboardList} color="bg-amber-100 text-amber-600" />
-          <QuickAction i={2} label="Mark Attendance"   desc="Record daily attendance" href="/attendance" icon={CalendarCheck} color="bg-emerald-100 text-emerald-600" />
+          <QuickAction i={1} label="Mark Attendance" desc="Record daily"       href="/attendance"  icon={CalendarCheck} color="bg-emerald-100 text-emerald-600" />
+          <QuickAction i={2} label="Enter Marks"     desc="Add exam marks"     href="/marks/entry" icon={Award}         color="bg-violet-100 text-violet-600" />
+          <QuickAction i={3} label="Approvals"       desc="Pending reviews"    href="/admin"       icon={ClipboardList} color="bg-amber-100 text-amber-600" />
         </div>
-
         {courses.length > 0 && (
-          <motion.div {...card(3)}>
+          <motion.div {...card(4)}>
             <h3 className="font-black text-slate-800 mb-4">Your Courses</h3>
             <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
               {courses.map((c: any, i: number) => (

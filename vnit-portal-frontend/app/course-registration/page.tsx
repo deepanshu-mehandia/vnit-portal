@@ -38,7 +38,8 @@ export default function CourseRegistration() {
     setLoading(true);
     try {
       const [allCourses, myRegs] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses/available`).then(r => r.json()),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses/available?semester=${localStorage.getItem("current_semester") || ""}`)
+          .then(r => r.json()),
         apiFetch("/registrations/my").catch(() => []),
       ]);
 

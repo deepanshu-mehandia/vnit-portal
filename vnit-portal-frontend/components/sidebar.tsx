@@ -7,17 +7,18 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard, BookOpen, CalendarCheck, Wallet,
   UserCircle, ShieldCheck, Users, GraduationCap, LogOut,
-  ChevronRight, ClipboardList, KeyRound,
+  ChevronRight, ClipboardList, KeyRound, Award, Home, UserCog,
 } from "lucide-react";
 
 type NavItem = { href: string; label: string; icon: any };
 
 export default function Sidebar() {
-  const pathname = usePathname();
-  const router   = useRouter();
+  const pathname    = usePathname();
+  const router      = useRouter();
   const [role,      setRole]      = useState<string | null>(null);
   const [name,      setName]      = useState("");
   const [isAdvisor, setIsAdvisor] = useState(false);
+  const [session,   setSession]   = useState("");
   const [ready,     setReady]     = useState(false);
 
   useEffect(() => {
@@ -26,30 +27,35 @@ export default function Sidebar() {
     setRole(localStorage.getItem("role"));
     setName(localStorage.getItem("user_name") || "");
     setIsAdvisor(localStorage.getItem("is_advisor") === "true");
+    setSession(localStorage.getItem("short_session") || "");
     setReady(true);
   }, [router]);
 
   if (!ready || !role) return null;
 
   const studentLinks: NavItem[] = [
-    { href: "/dashboard",           label: "Dashboard",    icon: LayoutDashboard },
-    { href: "/students",            label: "My Profile",   icon: UserCircle      },
-    { href: "/course-registration", label: "Courses",      icon: BookOpen        },
-    { href: "/attendance/student",  label: "Attendance",   icon: CalendarCheck   },
-    { href: "/fees",                label: "Fees",         icon: Wallet          },
+    { href: "/dashboard",           label: "Dashboard",   icon: LayoutDashboard },
+    { href: "/students",            label: "My Profile",  icon: UserCircle },
+    { href: "/course-registration", label: "Courses",     icon: BookOpen },
+    { href: "/attendance/student",  label: "Attendance",  icon: CalendarCheck },
+    { href: "/marks",               label: "My Marks",    icon: Award },
+    { href: "/fees",                label: "Fees",        icon: Wallet },
+    { href: "/hostel",              label: "Hostel",      icon: Home },
   ];
 
   const facultyLinks: NavItem[] = [
-    { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
-    { href: "/attendance", label: "Attendance", icon: CalendarCheck   },
+    { href: "/dashboard",   label: "Dashboard",   icon: LayoutDashboard },
+    { href: "/attendance",  label: "Attendance",  icon: CalendarCheck },
+    { href: "/marks/entry", label: "Enter Marks", icon: Award },
     ...(isAdvisor
       ? [{ href: "/admin", label: "Approvals", icon: ClipboardList }]
       : []),
   ];
 
   const adminLinks: NavItem[] = [
-    { href: "/dashboard", label: "Dashboard",  icon: LayoutDashboard },
-    { href: "/admin",     label: "Admin Panel", icon: ShieldCheck     },
+    { href: "/dashboard",     label: "Dashboard",  icon: LayoutDashboard },
+    { href: "/admin",         label: "Students",   icon: Users },
+    { href: "/admin/faculty", label: "Faculty",    icon: UserCog },
   ];
 
   const links = role === "student" ? studentLinks
@@ -61,7 +67,10 @@ export default function Sidebar() {
     : role.slice(0, 1).toUpperCase();
 
   return (
-    <motion.div initial={{ x:-20, opacity:0 }} animate={{ x:0, opacity:1 }} transition={{ duration:0.35 }}
+    <motion.div
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ x: 0,   opacity: 1 }}
+      transition={{ duration: 0.35 }}
       className="w-64 bg-slate-900 text-white flex-col hidden md:flex flex-shrink-0"
     >
       {/* Brand */}
@@ -72,7 +81,9 @@ export default function Sidebar() {
           </div>
           <div>
             <p className="font-black text-sm tracking-wide">VNIT Portal</p>
-            <p className="text-slate-400 text-[10px] uppercase tracking-widest">AIMS System</p>
+            <p className="text-slate-400 text-[10px] uppercase tracking-widest">
+              {session || "AIMS System"}
+            </p>
           </div>
         </div>
       </div>
@@ -86,7 +97,8 @@ export default function Sidebar() {
           const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
           return (
             <Link key={href} href={href}>
-              <motion.div whileHover={{ x:3 }}
+              <motion.div
+                whileHover={{ x: 3 }}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-150 group ${
                   active
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
@@ -103,13 +115,14 @@ export default function Sidebar() {
           );
         })}
 
-        {/* Change password — for everyone */}
+        {/* Account section */}
         <div className="pt-3 mt-3 border-t border-slate-800">
           <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest px-3 mb-2">
             Account
           </p>
           <Link href="/change-password">
-            <motion.div whileHover={{ x:3 }}
+            <motion.div
+              whileHover={{ x: 3 }}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group ${
                 pathname === "/change-password"
                   ? "bg-blue-600 text-white"
@@ -136,7 +149,8 @@ export default function Sidebar() {
             </p>
           </div>
         </div>
-        <button onClick={() => { localStorage.clear(); router.replace("/"); }}
+        <button
+          onClick={() => { localStorage.clear(); router.replace("/"); }}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all"
         >
           <LogOut size={16} />

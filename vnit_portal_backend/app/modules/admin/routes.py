@@ -18,15 +18,12 @@ def require_faculty(user=Depends(get_current_user)):
 
 
 def require_advisor(user=Depends(get_current_user)):
-    """Only faculty marked as advisors may access."""
     if user["role"] != "faculty":
         raise HTTPException(403, "Faculty only")
     conn = get_connection()
     cur  = conn.cursor()
     try:
-        cur.execute(
-            "SELECT is_advisor FROM faculty WHERE user_id = %s", (user["user_id"],)
-        )
+        cur.execute("SELECT is_advisor FROM faculty WHERE user_id = %s", (user["user_id"],))
         row = cur.fetchone()
         if not row or not row[0]:
             raise HTTPException(403, "Only faculty advisors can access this")
@@ -161,15 +158,60 @@ def get_student_detail(student_id: int, user=Depends(require_admin)):
         release_connection(conn)
 
 
+# ── ADMIN: Faculty list ────────────────────────────────────────
+@router.get("/faculty/all")
+def get_all_faculty(user=Depends(require_admin)):
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT f.faculty_id, f.name, f.email,
+                   f.designation, f.qualification,
+                   f.research_area, f.is_advisor,
+                   c.course_code, c.course_name, c.credits,
+                   co.offering_id
+            FROM faculty f
+            LEFT JOIN course_offerings co ON f.faculty_id = co.faculty_id
+            LEFT JOIN courses c ON co.course_id = c.course_id
+            ORDER BY f.name, c.course_code
+        """)
+        rows = cur.fetchall()
+
+        faculty_map: dict = {}
+        for row in rows:
+            fid = row[0]
+            if fid not in faculty_map:
+                faculty_map[fid] = {
+                    "faculty_id":    row[0],
+                    "name":          row[1],
+                    "email":         row[2],
+                    "designation":   row[3],
+                    "qualification": row[4],
+                    "research_area": row[5],
+                    "is_advisor":    row[6],
+                    "courses":       [],
+                }
+            if row[7]:   # course_code present
+                faculty_map[fid]["courses"].append({
+                    "offering_id": row[10],
+                    "course_code": row[7],
+                    "course_name": row[8],
+                    "credits":     row[9],
+                })
+
+        return list(faculty_map.values())
+    finally:
+        cur.close()
+        release_connection(conn)
+
+
 # ── FACULTY / ADVISOR ──────────────────────────────────────────
 @router.get("/faculty/students")
 def get_advisor_students(user=Depends(require_advisor)):
     conn = get_connection()
     cur  = conn.cursor()
     try:
-        cur.execute(
-            "SELECT faculty_id FROM faculty WHERE user_id = %s", (user["user_id"],)
-        )
+        cur.execute("SELECT faculty_id FROM faculty WHERE user_id = %s", (user["user_id"],))
         row = cur.fetchone()
         if not row:
             raise HTTPException(404, "Faculty not found")
@@ -194,9 +236,7 @@ def pending_approvals(user=Depends(require_advisor)):
     conn = get_connection()
     cur  = conn.cursor()
     try:
-        cur.execute(
-            "SELECT faculty_id FROM faculty WHERE user_id = %s", (user["user_id"],)
-        )
+        cur.execute("SELECT faculty_id FROM faculty WHERE user_id = %s", (user["user_id"],))
         row = cur.fetchone()
         if not row:
             raise HTTPException(404, "Faculty not found")
@@ -234,10 +274,7 @@ def approve_registration(data: dict, user=Depends(require_advisor)):
     conn = get_connection()
     cur  = conn.cursor()
     try:
-        cur.execute(
-            "UPDATE registrations SET status='approved' WHERE reg_id = %s",
-            (data["reg_id"],),
-        )
+        cur.execute("UPDATE registrations SET status='approved' WHERE reg_id = %s", (data["reg_id"],))
         conn.commit()
         return {"message": "Approved"}
     finally:
@@ -250,10 +287,7 @@ def reject_registration(data: dict, user=Depends(require_advisor)):
     conn = get_connection()
     cur  = conn.cursor()
     try:
-        cur.execute(
-            "UPDATE registrations SET status='rejected' WHERE reg_id = %s",
-            (data["reg_id"],),
-        )
+        cur.execute("UPDATE registrations SET status='rejected' WHERE reg_id = %s", (data["reg_id"],))
         conn.commit()
         return {"message": "Rejected"}
     finally:
