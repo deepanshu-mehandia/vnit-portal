@@ -1,22 +1,14 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import os
+import requests
 
-EMAIL    = os.getenv("EMAIL_USER")
-PASSWORD = os.getenv("EMAIL_PASS")
-
+# Set this in your Render Environment Variables
+APPS_SCRIPT_URL = os.getenv("APPS_SCRIPT_URL") 
+SECRET_KEY = "my_secret_aims_portal_key_2109" # Must match the script
 
 def send_credentials_email(to_email: str, username: str, password: str, first_name: str = ""):
     name = (first_name or username.split("@")[0]).upper()
-
-    try:
-        msg            = MIMEMultipart()
-        msg["From"]    = EMAIL
-        msg["To"]      = to_email
-        msg["Subject"] = "AIMS Account Created - Login Credentials"
-
-        body = f"""Dear {name},
+    
+    body = f"""Dear {name},
 
 We are pleased to inform you that your account for AIMS has been successfully created. We are excited to have you on board!
 
@@ -41,17 +33,25 @@ Best regards,
 VNIT Academic Section
 Visvesvaraya National Institute of Technology, Nagpur"""
 
-        msg.attach(MIMEText(body, "plain"))
-
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(EMAIL, PASSWORD)
-        server.sendmail(EMAIL, to_email, msg.as_string())
-        server.quit()
-
-        print(f"EMAIL SENT TO {to_email}")
-        return True
-
+    payload = {
+        "secret_key": SECRET_KEY,
+        "to_email": to_email,
+        "subject": "AIMS Account Created - Login Credentials",
+        "body": body
+    }
+    
+    try:
+        # Send the HTTP POST request to your Google Apps Script
+        response = requests.post(APPS_SCRIPT_URL, json=payload)
+        result = response.json()
+        
+        if result.get("status") == "success":
+            print(f"EMAIL SENT TO {to_email}")
+            return True
+        else:
+            print("APPS SCRIPT ERROR:", result.get("message"))
+            return False
+            
     except Exception as e:
-        print("EMAIL ERROR:", str(e))
+        print("REQUEST ERROR:", str(e))
         return False
