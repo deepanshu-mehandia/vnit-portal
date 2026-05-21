@@ -3,8 +3,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 
-EMAIL    = os.getenv("GMAIL_USER")
-PASSWORD = os.getenv("GMAIL_PASS")
+EMAIL    = os.getenv("EMAIL_USER")
+PASSWORD = os.getenv("EMAIL_PASS")
 
 
 def send_credentials_email(to_email: str, username: str, password: str, first_name: str = ""):
