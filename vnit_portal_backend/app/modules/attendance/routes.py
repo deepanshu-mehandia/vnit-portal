@@ -109,7 +109,10 @@ def get_marks_for_date(offering_id: int, date_str: str, user=Depends(get_current
 
 # ── Student attendance summary ─────────────────────────────────
 @router.get("/student")
-def get_student_attendance(user=Depends(get_current_user)):
+def get_student_attendance(session_id: int = None, user=Depends(get_current_user)):
+    """
+    Get student attendance summary with optional session filtering
+    """
     conn = get_connection()
     cur  = conn.cursor()
     try:
@@ -121,25 +124,40 @@ def get_student_attendance(user=Depends(get_current_user)):
             raise HTTPException(404, "Student not found")
         student_id = row[0]
 
-        cur.execute("""
+        query = """
             SELECT c.course_code, c.course_name,
                    COUNT(*) FILTER (WHERE a.status = 'present') AS present,
-                   COUNT(*) AS total
+                   COUNT(*) AS total,
+                   acs.year AS session_year,
+                   acs.session AS session_code
             FROM attendance a
             JOIN course_offerings co ON a.offering_id = co.offering_id
             JOIN courses c           ON co.course_id  = c.course_id
+            LEFT JOIN academic_sessions acs ON co.session_id = acs.id
             WHERE a.student_id = %s
-            GROUP BY c.course_code, c.course_name
+        """
+        params = [student_id]
+        
+        if session_id:
+            query += " AND co.session_id = %s"
+            params.append(session_id)
+        
+        query += """
+            GROUP BY c.course_code, c.course_name, acs.year, acs.session
             ORDER BY c.course_code
-        """, (student_id,))
+        """
+
+        cur.execute(query, params)
 
         return [
             {
-                "course_code": d[0],
-                "course_name": d[1],
-                "present":     d[2],
-                "total":       d[3],
-                "percentage":  round((d[2] / d[3]) * 100, 2) if d[3] else 0,
+                "course_code":   d[0],
+                "course_name":   d[1],
+                "present":       d[2],
+                "total":         d[3],
+                "percentage":    round((d[2] / d[3]) * 100, 2) if d[3] else 0,
+                "session_year":  d[4],
+                "session_code":  d[5],
             }
             for d in cur.fetchall()
         ]
@@ -192,26 +210,41 @@ def get_students_for_course(offering_id: int, user=Depends(get_current_user)):
 
 # ── Faculty's own courses ──────────────────────────────────────
 @router.get("/my-courses")
-def get_my_courses(user=Depends(get_current_user)):
+def get_my_courses(session_id: int = None, user=Depends(get_current_user)):
+    """
+    Get faculty's courses with optional session filtering
+    """
     conn = get_connection()
     cur  = conn.cursor()
     try:
         faculty_id = _get_faculty_id(cur, user["user_id"])
 
-        cur.execute("""
-            SELECT co.offering_id, c.course_code, c.course_name, c.credits
+        query = """
+            SELECT co.offering_id, c.course_code, c.course_name, c.credits,
+                   acs.year AS session_year, acs.session AS session_code
             FROM course_offerings co
             JOIN courses c ON co.course_id = c.course_id
+            LEFT JOIN academic_sessions acs ON co.session_id = acs.id
             WHERE co.faculty_id = %s
-            ORDER BY c.course_code
-        """, (faculty_id,))
+        """
+        params = [faculty_id]
+        
+        if session_id:
+            query += " AND co.session_id = %s"
+            params.append(session_id)
+        
+        query += " ORDER BY c.course_code"
+
+        cur.execute(query, params)
 
         return [
             {
-                "offering_id": d[0],
-                "course_code": d[1],
-                "course_name": d[2],
-                "credits":     d[3],
+                "offering_id":   d[0],
+                "course_code":   d[1],
+                "course_name":   d[2],
+                "credits":       d[3],
+                "session_year":  d[4],
+                "session_code":  d[5],
             }
             for d in cur.fetchall()
         ]

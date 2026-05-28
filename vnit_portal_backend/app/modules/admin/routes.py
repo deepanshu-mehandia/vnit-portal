@@ -168,9 +168,11 @@ def get_all_faculty(user=Depends(require_admin)):
             SELECT f.faculty_id, f.name, f.email,
                    f.designation, f.qualification,
                    f.research_area, f.is_advisor,
+                   b.branch_name,
                    c.course_code, c.course_name, c.credits,
                    co.offering_id
             FROM faculty f
+            LEFT JOIN branches b ON f.branch_id = b.branch_id
             LEFT JOIN course_offerings co ON f.faculty_id = co.faculty_id
             LEFT JOIN courses c ON co.course_id = c.course_id
             ORDER BY f.name, c.course_code
@@ -189,17 +191,143 @@ def get_all_faculty(user=Depends(require_admin)):
                     "qualification": row[4],
                     "research_area": row[5],
                     "is_advisor":    row[6],
+                    "department":    row[7],
                     "courses":       [],
                 }
-            if row[7]:   # course_code present
+            if row[8]:   # course_code present
                 faculty_map[fid]["courses"].append({
-                    "offering_id": row[10],
-                    "course_code": row[7],
-                    "course_name": row[8],
-                    "credits":     row[9],
+                    "offering_id": row[11],
+                    "course_code": row[8],
+                    "course_name": row[9],
+                    "credits":     row[10],
                 })
 
         return list(faculty_map.values())
+    finally:
+        cur.close()
+        release_connection(conn)
+
+
+@router.get("/faculty/by-department")
+def get_faculty_by_department(user=Depends(require_admin)):
+    """Get all faculty members grouped by department"""
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT f.faculty_id, f.name, f.email, f.designation,
+                   f.qualification, f.research_area, f.is_advisor,
+                   b.branch_id, b.branch_name
+            FROM faculty f
+            LEFT JOIN branches b ON f.branch_id = b.branch_id
+            ORDER BY b.branch_name, f.name
+        """)
+        rows = cur.fetchall()
+        
+        departments = {}
+        for row in rows:
+            dept_id = row[7]
+            dept_name = row[8] or "Unassigned"
+            
+            if dept_name not in departments:
+                departments[dept_name] = []
+            
+            departments[dept_name].append({
+                "faculty_id":    row[0],
+                "name":          row[1],
+                "email":         row[2],
+                "designation":   row[3],
+                "qualification": row[4],
+                "research_area": row[5],
+                "is_advisor":    row[6],
+            })
+        
+        return departments
+    finally:
+        cur.close()
+        release_connection(conn)
+
+
+@router.get("/faculty/{faculty_id}")
+def get_faculty_detail(faculty_id: int, user=Depends(require_admin)):
+    """Get detailed information about a specific faculty member"""
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT f.faculty_id, f.name, f.email, f.designation,
+                   f.qualification, f.research_area, f.is_advisor,
+                   b.branch_id, b.branch_name
+            FROM faculty f
+            LEFT JOIN branches b ON f.branch_id = b.branch_id
+            WHERE f.faculty_id = %s
+        """, (faculty_id,))
+        row = cur.fetchone()
+        
+        if not row:
+            raise HTTPException(404, "Faculty not found")
+        
+        return {
+            "faculty_id":    row[0],
+            "name":          row[1],
+            "email":         row[2],
+            "designation":   row[3],
+            "qualification": row[4],
+            "research_area": row[5],
+            "is_advisor":    row[6],
+            "branch_id":     row[7],
+            "department":    row[8],
+        }
+    finally:
+        cur.close()
+        release_connection(conn)
+
+
+@router.put("/faculty/{faculty_id}")
+def update_faculty(faculty_id: int, data: dict, user=Depends(require_admin)):
+    """Update faculty information"""
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        fields = []
+        values = []
+        
+        allowed_fields = ["name", "email", "designation", "qualification", 
+                         "research_area", "is_advisor", "branch_id"]
+        
+        for field in allowed_fields:
+            if field in data:
+                fields.append(f"{field} = %s")
+                values.append(data[field])
+        
+        if not fields:
+            raise HTTPException(400, "No valid fields to update")
+        
+        values.append(faculty_id)
+        query = f"UPDATE faculty SET {', '.join(fields)} WHERE faculty_id = %s"
+        
+        cur.execute(query, values)
+        conn.commit()
+        
+        return {"message": "Faculty updated successfully"}
+    finally:
+        cur.close()
+        release_connection(conn)
+
+
+@router.get("/branches/all")
+def get_all_branches(user=Depends(require_admin)):
+    """Get all departments/branches"""
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT branch_id, branch_name
+            FROM branches
+            ORDER BY branch_name
+        """)
+        rows = cur.fetchall()
+        return [{"branch_id": r[0], "branch_name": r[1]} for r in rows]
     finally:
         cur.close()
         release_connection(conn)
