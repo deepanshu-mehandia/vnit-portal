@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import { sessionQuery } from "@/lib/session";
 import {
   BookOpen, CalendarCheck, Wallet, UserCircle,
   ClipboardList, Users, CheckCircle, Clock, ChevronRight,
@@ -87,10 +88,11 @@ export default function Dashboard() {
         }
 
         if (userRole === "student") {
+          const sq = sessionQuery();
           const [prof, att, regs] = await Promise.all([
             apiFetch("/students/me"),
-            apiFetch("/attendance/student").catch(() => []),
-            apiFetch("/registrations/my").catch(() => []),
+            apiFetch(`/attendance/student${sq}`).catch(() => []),
+            apiFetch(`/registrations/my${sq}`).catch(() => []),
           ]);
           setStudent(prof);
           setAttendance(att || []);

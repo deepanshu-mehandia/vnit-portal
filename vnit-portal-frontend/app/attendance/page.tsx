@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
+import { sessionQuery } from "@/lib/session";
 import { CalendarCheck, Users, CheckCircle, Save, RefreshCw } from "lucide-react";
 
 type Student = { student_id: number; name: string; roll_number: string };
@@ -20,14 +21,14 @@ export default function AttendancePage() {
   const [loadingStudents,setLoadingStudents]= useState(false);
   const [saved,          setSaved]          = useState(false);
 
-  // Load faculty courses on mount
+  // Load faculty courses filtered by current session
   useEffect(() => {
-    apiFetch("/attendance/my-courses")
+    const sq = sessionQuery();   // ← passes session_id
+    apiFetch(`/attendance/my-courses${sq}`)
       .then(setCourses)
       .catch((e: any) => toast.error(e.message));
   }, []);
 
-  // Reload students + existing marks when course or date changes
   useEffect(() => {
     if (!selectedCourse) return;
     loadStudentsAndMarks(selectedCourse, selectedDate);
@@ -45,7 +46,6 @@ export default function AttendancePage() {
 
       setStudents(studentsData);
 
-      // Pre-fill: use existing marks if available, else default to "present"
       const initial: Record<number, string> = {};
       studentsData.forEach((s: Student) => {
         initial[s.student_id] = (existingMarks as any)[s.student_id] ?? "present";
@@ -80,6 +80,7 @@ export default function AttendancePage() {
 
   const presentCount = Object.values(attendance).filter(v => v === "present").length;
   const absentCount  = Object.values(attendance).filter(v => v === "absent").length;
+  const sessionLabel = localStorage.getItem("short_session") || "Current Session";
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 pb-10">
@@ -87,7 +88,9 @@ export default function AttendancePage() {
       <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
         className="bg-gradient-to-r from-indigo-600 to-violet-700 rounded-3xl p-7 text-white shadow-xl shadow-indigo-500/20"
       >
-        <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">Faculty Portal</p>
+        <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">
+          {sessionLabel} · Faculty Portal
+        </p>
         <h1 className="text-2xl font-black mb-1">Mark Attendance</h1>
         <p className="text-indigo-200 text-sm">Select a course and date to record attendance</p>
       </motion.div>
@@ -100,8 +103,7 @@ export default function AttendancePage() {
           <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
             Course
           </label>
-          <select
-            onChange={e => setSelectedCourse(Number(e.target.value))}
+          <select onChange={e => setSelectedCourse(Number(e.target.value))}
             className="w-full border border-slate-200 bg-slate-50 text-slate-800 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
           >
             <option value="">— Select Course —</option>
@@ -135,7 +137,6 @@ export default function AttendancePage() {
 
         ) : students.length > 0 ? (
           <motion.div key="list" initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
-            {/* Summary bar */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-1.5 font-semibold text-emerald-600">
@@ -188,9 +189,7 @@ export default function AttendancePage() {
                       <p className="text-slate-400 text-xs">{s.roll_number}</p>
                     </div>
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                      isPresent
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-red-100 text-red-600"
+                      isPresent ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"
                     }`}>
                       {isPresent ? "✓ Present" : "✗ Absent"}
                     </div>
@@ -199,10 +198,9 @@ export default function AttendancePage() {
               })}
             </div>
 
-            {/* Submit */}
-            <div className="flex gap-3 mt-4">
+            <div className="mt-4">
               <motion.button whileTap={{ scale:0.97 }} onClick={submitAttendance} disabled={loading}
-                className={`flex-1 flex items-center justify-center gap-2 font-bold py-3.5 rounded-xl transition-all disabled:opacity-60 ${
+                className={`w-full flex items-center justify-center gap-2 font-bold py-3.5 rounded-xl transition-all disabled:opacity-60 ${
                   saved
                     ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                     : "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-lg shadow-indigo-500/20"
@@ -218,7 +216,7 @@ export default function AttendancePage() {
               </motion.button>
             </div>
             <p className="text-center text-slate-400 text-xs mt-2">
-              Click on a student row to toggle present / absent
+              Click a row to toggle present / absent
             </p>
           </motion.div>
 
@@ -228,7 +226,6 @@ export default function AttendancePage() {
           >
             <Users size={40} className="text-slate-300 mx-auto mb-3" />
             <p className="text-slate-500 font-semibold">No students enrolled</p>
-            <p className="text-slate-400 text-sm mt-1">No students are registered for this course yet</p>
           </motion.div>
         ) : (
           <motion.div key="placeholder" initial={{ opacity:0 }} animate={{ opacity:1 }}

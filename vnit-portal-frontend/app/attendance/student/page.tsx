@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
-import { CalendarCheck, AlertTriangle, CheckCircle, TrendingUp } from "lucide-react";
+import { CalendarCheck, AlertTriangle, CheckCircle } from "lucide-react";
+import { sessionQuery } from "@/lib/session";
 
 type CourseAttendance = {
   course_code: string;
@@ -21,14 +22,11 @@ function AttendanceCard({ c, i }: { c: CourseAttendance; i: number }) {
   const bar   = good ? "bg-emerald-500" : warn ? "bg-amber-400"    : "bg-red-500";
   const bg    = good ? "bg-emerald-50 border-emerald-100" : warn ? "bg-amber-50 border-amber-100" : "bg-red-50 border-red-100";
 
-  const classesNeeded = Math.max(0, Math.ceil((0.75 * c.total - c.present) / 0.25));
+  const classesNeeded  = Math.max(0, Math.ceil((0.75 * c.total - c.present) / 0.25));
   const classesCanSkip = good ? Math.floor((c.present - 0.75 * c.total) / 0.75) : 0;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: i * 0.06 }}
+    <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ delay: i * 0.06 }}
       className={`bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all ${bg}`}
     >
       <div className="flex items-start justify-between gap-3 mb-4">
@@ -41,7 +39,6 @@ function AttendanceCard({ c, i }: { c: CourseAttendance; i: number }) {
         <div className={`text-2xl font-black ${color} flex-shrink-0`}>{pct}%</div>
       </div>
 
-      {/* Progress bar */}
       <div className="w-full bg-slate-100 rounded-full h-2 mb-3">
         <motion.div
           initial={{ width: 0 }}
@@ -76,9 +73,12 @@ export default function StudentAttendance() {
     (async () => {
       try {
         const token = localStorage.getItem("token");
-        const res   = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/attendance/student`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const sq    = sessionQuery();   // ← passes session_id + semester
+
+        const res  = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/attendance/student${sq}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         const json = await res.json();
         setData(Array.isArray(json) ? json : []);
       } catch { toast.error("Failed to load attendance"); }
@@ -86,8 +86,11 @@ export default function StudentAttendance() {
     })();
   }, []);
 
-  const avg        = data.length ? Math.round(data.reduce((s, c) => s + c.percentage, 0) / data.length) : 0;
-  const belowCutoff = data.filter(c => c.percentage < 75).length;
+  const avg          = data.length
+    ? Math.round(data.reduce((s, c) => s + c.percentage, 0) / data.length)
+    : 0;
+  const belowCutoff  = data.filter(c => c.percentage < 75).length;
+  const sessionLabel = localStorage.getItem("short_session") || "Current Session";
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">
@@ -103,7 +106,7 @@ export default function StudentAttendance() {
           ? "bg-gradient-to-r from-emerald-500 to-teal-600 shadow-emerald-500/20"
           : "bg-gradient-to-r from-amber-500 to-orange-600 shadow-amber-500/20"}`}
       >
-        <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Semester I · 2025–26</p>
+        <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{sessionLabel}</p>
         <h1 className="text-2xl font-black mb-4">My Attendance</h1>
         <div className="flex flex-wrap gap-4">
           <div className="bg-white/15 rounded-xl px-4 py-2 text-center">
@@ -138,8 +141,8 @@ export default function StudentAttendance() {
       {data.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
           <CalendarCheck size={40} className="text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500 font-semibold">No attendance data yet</p>
-          <p className="text-slate-400 text-sm mt-1">Check back after your classes begin</p>
+          <p className="text-slate-500 font-semibold">No attendance data for this session</p>
+          <p className="text-slate-400 text-sm mt-1">Session: {sessionLabel}</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">

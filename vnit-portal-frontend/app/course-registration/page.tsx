@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
+import { sessionQuery } from "@/lib/session";
 import {
   BookOpen, Users, Star, CheckCircle, Loader,
-  Clock, XCircle, Filter,
+  Clock, XCircle,
 } from "lucide-react";
 
 type Course = {
@@ -16,6 +17,7 @@ type Course = {
   credits: number;
   capacity: number;
   faculty: string;
+  course_type?: string;
   registered?: boolean;
   reg_status?: string;
 };
@@ -37,10 +39,12 @@ export default function CourseRegistration() {
   async function loadAll() {
     setLoading(true);
     try {
+      const sq = sessionQuery();   // e.g. "?session_id=2&semester=2"
+
       const [allCourses, myRegs] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses/available?semester=${localStorage.getItem("current_semester") || ""}`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses/available${sq}`)
           .then(r => r.json()),
-        apiFetch("/registrations/my").catch(() => []),
+        apiFetch(`/registrations/my${sq}`).catch(() => []),
       ]);
 
       const regMap: Record<number, string> = {};
@@ -85,10 +89,12 @@ export default function CourseRegistration() {
     }
   }
 
-  const available   = courses.filter(c => !c.registered);
-  const registered  = courses.filter(c =>  c.registered);
+  const available  = courses.filter(c => !c.registered);
+  const registered = courses.filter(c =>  c.registered);
   const totalCredits = registered.reduce((s, c) => s + (c.credits || 0), 0);
   const shown = tab === "available" ? available : registered;
+
+  const sessionLabel = localStorage.getItem("short_session") || "Current Session";
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">
@@ -102,7 +108,9 @@ export default function CourseRegistration() {
       <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
         className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-7 text-white shadow-xl shadow-blue-500/20"
       >
-        <p className="text-blue-200 text-xs font-bold uppercase tracking-widest mb-1">Semester I · 2025–26</p>
+        <p className="text-blue-200 text-xs font-bold uppercase tracking-widest mb-1">
+          {sessionLabel}
+        </p>
         <h1 className="text-2xl font-black mb-4">Course Registration</h1>
         <div className="flex flex-wrap gap-3">
           {[
@@ -143,8 +151,13 @@ export default function CourseRegistration() {
             <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
               <BookOpen size={40} className="text-slate-300 mx-auto mb-3" />
               <p className="text-slate-500 font-semibold">
-                {tab === "available" ? "No more courses to register" : "No registered courses yet"}
+                {tab === "available" ? "No courses available for this session" : "No registered courses yet"}
               </p>
+              {tab === "available" && (
+                <p className="text-slate-400 text-sm mt-1">
+                  Session: {sessionLabel}
+                </p>
+              )}
             </div>
           ) : shown.map((course, i) => (
             <motion.div key={course.offering_id}
@@ -170,26 +183,31 @@ export default function CourseRegistration() {
                   <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
                     {course.course_code}
                   </span>
+                  {course.course_type && (
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      course.course_type === "DC"
+                        ? "bg-slate-100 text-slate-600"
+                        : "bg-violet-50 text-violet-600"
+                    }`}>
+                      {course.course_type}
+                    </span>
+                  )}
                   <span className="text-xs text-slate-400 flex items-center gap-1">
                     <Star size={10} /> {course.credits} Credits
                   </span>
                 </div>
                 <p className="font-bold text-slate-800 text-sm">{course.course_name}</p>
-                <div className="flex items-center gap-3 mt-0.5">
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <Users size={10} /> {course.faculty}
-                  </span>
-                </div>
+                <span className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                  <Users size={10} /> {course.faculty}
+                </span>
               </div>
 
               {course.registered ? (
-                <div className="flex flex-col items-end gap-1">
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${STATUS_STYLES[course.reg_status!] || "bg-slate-100 text-slate-600"}`}>
-                    {course.reg_status === "approved" && <span className="flex items-center gap-1"><CheckCircle size={11} /> Approved</span>}
-                    {course.reg_status === "pending"  && <span className="flex items-center gap-1"><Clock size={11} /> Pending</span>}
-                    {course.reg_status === "rejected" && <span className="flex items-center gap-1"><XCircle size={11} /> Rejected</span>}
-                  </span>
-                </div>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${STATUS_STYLES[course.reg_status!] || "bg-slate-100 text-slate-600"}`}>
+                  {course.reg_status === "approved" && <span className="flex items-center gap-1"><CheckCircle size={11} /> Approved</span>}
+                  {course.reg_status === "pending"  && <span className="flex items-center gap-1"><Clock size={11} /> Pending</span>}
+                  {course.reg_status === "rejected" && <span className="flex items-center gap-1"><XCircle size={11} /> Rejected</span>}
+                </span>
               ) : (
                 <button onClick={() => handleRegister(course.offering_id)}
                   disabled={loadingId === course.offering_id}

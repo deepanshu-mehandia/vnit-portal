@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Depends
+from typing import Optional
 from app.database.connection import get_connection, release_connection
 from app.core.dependencies import get_current_user
 
@@ -12,7 +13,7 @@ class RegistrationRequest(BaseModel):
 
 
 @router.get("/my")
-def get_my_registrations(user=Depends(get_current_user)):
+def get_my_registrations(session_id: Optional[int] = None, user=Depends(get_current_user)):
     conn = get_connection()
     cur = conn.cursor()
     try:
@@ -24,7 +25,7 @@ def get_my_registrations(user=Depends(get_current_user)):
             raise HTTPException(404, "Student not found")
         student_id = row[0]
 
-        cur.execute("""
+        query = """
             SELECT r.reg_id, r.status, r.offering_id,
                    c.course_code, c.course_name, c.credits, c.course_type,
                    f.name  AS faculty_name,
@@ -34,8 +35,15 @@ def get_my_registrations(user=Depends(get_current_user)):
             JOIN courses c  ON co.course_id  = c.course_id
             JOIN faculty f  ON co.faculty_id = f.faculty_id
             WHERE r.student_id = %s
-            ORDER BY c.course_code
-        """, (student_id,))
+        """
+        params: list = [student_id]
+
+        if session_id:
+            query += " AND co.session_id = %s"
+            params.append(session_id)
+
+        query += " ORDER BY c.course_code"
+        cur.execute(query, params)
 
         rows = cur.fetchall()
         return [
