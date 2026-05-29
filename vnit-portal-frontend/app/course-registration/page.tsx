@@ -33,6 +33,10 @@ export default function CourseRegistration() {
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [tab,       setTab]       = useState<"available" | "registered">("available");
   const [loading,   setLoading]   = useState(true);
+  const [sessionLabel, setSessionLabel] = useState("Current Session");
+  useEffect(() => {
+    setSessionLabel(localStorage.getItem("short_session") || "Current Session");
+  }, []);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -94,7 +98,6 @@ export default function CourseRegistration() {
   const totalCredits = registered.reduce((s, c) => s + (c.credits || 0), 0);
   const shown = tab === "available" ? available : registered;
 
-  const sessionLabel = localStorage.getItem("short_session") || "Current Session";
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">

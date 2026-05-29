@@ -19,3 +19,8 @@ export function sessionQuery(): string {
   if (p.semester)   parts.push(`semester=${p.semester}`);
   return parts.length ? `?${parts.join("&")}` : "";
 }
+
+export function safeGet(key: string, fallback = ""): string {
+  if (typeof window === "undefined") return fallback;
+  return localStorage.getItem(key) || fallback;
+}

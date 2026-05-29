@@ -68,6 +68,10 @@ function AttendanceCard({ c, i }: { c: CourseAttendance; i: number }) {
 export default function StudentAttendance() {
   const [data,    setData]    = useState<CourseAttendance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sessionLabel, setSessionLabel] = useState("Current Session");
+  useEffect(() => {
+    setSessionLabel(localStorage.getItem("short_session") || "Current Session");
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -90,7 +94,6 @@ export default function StudentAttendance() {
     ? Math.round(data.reduce((s, c) => s + c.percentage, 0) / data.length)
     : 0;
   const belowCutoff  = data.filter(c => c.percentage < 75).length;
-  const sessionLabel = localStorage.getItem("short_session") || "Current Session";
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">

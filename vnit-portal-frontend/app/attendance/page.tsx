@@ -20,7 +20,10 @@ export default function AttendancePage() {
   const [loading,        setLoading]        = useState(false);
   const [loadingStudents,setLoadingStudents]= useState(false);
   const [saved,          setSaved]          = useState(false);
-
+  const [sessionLabel, setSessionLabel] = useState("Current Session");
+  useEffect(() => {
+    setSessionLabel(localStorage.getItem("short_session") || "Current Session");
+  }, []);
   // Load faculty courses filtered by current session
   useEffect(() => {
     const sq = sessionQuery();   // ← passes session_id
@@ -80,7 +83,6 @@ export default function AttendancePage() {
 
   const presentCount = Object.values(attendance).filter(v => v === "present").length;
   const absentCount  = Object.values(attendance).filter(v => v === "absent").length;
-  const sessionLabel = localStorage.getItem("short_session") || "Current Session";
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 pb-10">
