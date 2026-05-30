@@ -21,13 +21,25 @@ class ChangePasswordRequest(BaseModel):
 @router.post("/login")
 def login(data: LoginRequest):
     conn = get_connection()
-    cur = conn.cursor()
+    cur  = conn.cursor()
     try:
+        # Try login by username (email) first
         cur.execute(
             "SELECT user_id, username, password, role FROM users WHERE username = %s",
             (data.username,),
         )
         user = cur.fetchone()
+
+        # If not found, try login by roll number
+        if not user:
+            cur.execute("""
+                SELECT u.user_id, u.username, u.password, u.role
+                FROM users u
+                JOIN students s ON s.user_id = u.user_id
+                WHERE s.roll_number = %s
+            """, (data.username,))
+            user = cur.fetchone()
+
         if not user:
             raise HTTPException(401, "Invalid credentials")
 
@@ -38,8 +50,8 @@ def login(data: LoginRequest):
 
         token = create_access_token({"user_id": user_id, "role": role})
 
-        student_id = None
-        is_advisor  = False
+        student_id   = None
+        is_advisor   = False
         display_name = username
 
         if role == "student":
@@ -89,7 +101,7 @@ def change_password(data: ChangePasswordRequest, user=Depends(get_current_user))
         raise HTTPException(400, "New password must be at least 6 characters")
 
     conn = get_connection()
-    cur = conn.cursor()
+    cur  = conn.cursor()
     try:
         cur.execute("SELECT password FROM users WHERE user_id = %s", (user["user_id"],))
         row = cur.fetchone()

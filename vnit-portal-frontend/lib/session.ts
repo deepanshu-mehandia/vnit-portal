@@ -1,23 +1,23 @@
-/**
- * Returns query-string params for the currently selected session.
- * Pass append=true to get "?session_id=2&semester=2",
- * or append=false to get a plain object { session_id, semester }.
- */
 export function sessionParams(): { session_id: string; semester: string } {
   if (typeof window === "undefined") return { session_id: "", semester: "" };
   return {
-    session_id: localStorage.getItem("session_id")    || "",
+    session_id: localStorage.getItem("session_id")       || "",
     semester:   localStorage.getItem("current_semester") || "",
   };
 }
 
-/** Returns a query-string like "?session_id=2&semester=2" (omits empty values) */
+/**
+ * Returns ?session_id=X when a session was selected at login.
+ * Falls back to ?semester=X only when no session_id is available.
+ * Never sends both — backend uses AND which causes false negatives.
+ */
 export function sessionQuery(): string {
-  const p = sessionParams();
-  const parts: string[] = [];
-  if (p.session_id) parts.push(`session_id=${p.session_id}`);
-  if (p.semester)   parts.push(`semester=${p.semester}`);
-  return parts.length ? `?${parts.join("&")}` : "";
+  if (typeof window === "undefined") return "";
+  const session_id = localStorage.getItem("session_id") || "";
+  const semester   = localStorage.getItem("current_semester") || "";
+  if (session_id && session_id !== "0") return `?session_id=${session_id}`;
+  if (semester)                         return `?semester=${semester}`;
+  return "";
 }
 
 export function safeGet(key: string, fallback = ""): string {

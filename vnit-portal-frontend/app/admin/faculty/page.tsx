@@ -365,7 +365,7 @@ export default function AdminFacultyPage() {
                     </div>
                   )}
 
-                  {/* Courses */}
+                  {/* Courses
                   {f.courses.length > 0 && (
                     <div>
                       <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -388,7 +388,7 @@ export default function AdminFacultyPage() {
                         ))}
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </motion.div>
             </motion.div>
