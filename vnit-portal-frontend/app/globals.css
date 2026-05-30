@@ -43,3 +43,48 @@ body {
 .badge-approved { @apply bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-semibold; }
 .badge-pending  { @apply bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-semibold; }
 .badge-rejected { @apply bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-semibold; }
+
+/* ── existing styles above ── */
+
+/* ── Print styles for Grade Card ── */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm;
+  }
+
+  /* Hide layout chrome */
+  .no-print { display: none !important; }
+
+  /* Hide sidebar and navbar — target layout structure */
+  body > div > div:first-child,  /* sidebar */
+  header                          /* navbar   */
+  { display: none !important; }
+
+  /* Remove layout height/overflow constraints */
+  html, body { 
+    height: auto !important; 
+    overflow: visible !important; 
+    background: white !important;
+  }
+  
+  .flex.h-screen { 
+    height: auto !important; 
+    display: block !important; 
+  }
+  
+  main { 
+    overflow: visible !important; 
+    height: auto !important; 
+    padding: 0 !important; 
+  }
+
+  /* Grade card print specifics */
+  #grade-card-print {
+    display: block;
+    width: 100%;
+  }
+
+  table { page-break-inside: avoid; }
+  .print\:shadow-none { box-shadow: none !important; }
+}

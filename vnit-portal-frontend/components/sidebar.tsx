@@ -39,6 +39,7 @@ export default function Sidebar() {
     { href: "/course-registration", label: "Courses",     icon: BookOpen },
     { href: "/attendance/student",  label: "Attendance",  icon: CalendarCheck },
     { href: "/marks",               label: "My Marks",    icon: Award },
+    { href: "/grade-card",          label: "Grade Card",  icon: GraduationCap },
     { href: "/fees",                label: "Fees",        icon: Wallet },
     { href: "/hostel",              label: "Hostel",      icon: Home },
   ];
