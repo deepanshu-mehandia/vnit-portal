@@ -364,6 +364,31 @@ export default function AdminFacultyPage() {
                       <p className="text-sm font-semibold text-slate-800">{f.research_area}</p>
                     </div>
                   )}
+
+                  {/* Courses */}
+                  {f.courses.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <BookOpen size={12} /> Assigned Courses
+                      </p>
+                      <div className="grid sm:grid-cols-2 gap-2">
+                        {f.courses.map((c: any) => (
+                          <div key={c.offering_id}
+                            className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2"
+                          >
+                            <div className="w-7 h-7 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <BookOpen size={13} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-blue-700">{c.course_code}</p>
+                              <p className="text-xs text-slate-600 truncate">{c.course_name}</p>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400 ml-auto">{c.credits}cr</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </motion.div>
