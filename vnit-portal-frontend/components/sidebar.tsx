@@ -8,6 +8,7 @@ import {
   LayoutDashboard, BookOpen, CalendarCheck, Wallet,
   UserCircle, ShieldCheck, Users, GraduationCap, LogOut,
   ChevronRight, ClipboardList, KeyRound, Award, Home, UserCog,
+  Calendar,
 } from "lucide-react";
 
 type NavItem = { href: string; label: string; icon: any };
@@ -57,6 +58,7 @@ export default function Sidebar() {
     { href: "/dashboard",     label: "Dashboard",  icon: LayoutDashboard },
     { href: "/admin",         label: "Students",   icon: Users },
     { href: "/admin/faculty", label: "Faculty",    icon: UserCog },
+    { href: "/admin/sessions", label: "Sessions",   icon: Calendar }, 
   ];
 
   const links = role === "student" ? studentLinks
