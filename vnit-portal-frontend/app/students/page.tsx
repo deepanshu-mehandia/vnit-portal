@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { motion } from "framer-motion";
 import {
   User, Mail, Phone, Calendar, MapPin, BookOpen,
-  Shield, Hash, Heart, Fingerprint, GraduationCap,
+  Shield, Hash, Heart, Fingerprint, GraduationCap, Camera,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value?: string | null }) {
   if (!value) return null;
@@ -37,15 +38,51 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function Students() {
-  const router = useRouter();
-  const [student, setStudent] = useState<any>(null);
+  const router   = useRouter();
+  const fileRef  = useRef<HTMLInputElement>(null);
+  const [student,       setStudent]       = useState<any>(null);
+  const [uploadingPhoto,setUploadingPhoto]= useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) { router.push("/"); return; }
-    apiFetch("/students/me")
-      .then(setStudent)
-      .catch(console.error);
+    apiFetch("/students/me").then(setStudent).catch(console.error);
   }, []);
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("Max 2MB"); return; }
+
+    // Compress to 200×200 via canvas
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = async () => {
+      const canvas = document.createElement("canvas");
+      const SIZE = 200;
+      canvas.width = SIZE; canvas.height = SIZE;
+      const ctx = canvas.getContext("2d")!;
+      // crop to square
+      const min = Math.min(img.width, img.height);
+      const sx  = (img.width  - min) / 2;
+      const sy  = (img.height - min) / 2;
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, SIZE, SIZE);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+
+      try {
+        setUploadingPhoto(true);
+        await apiFetch("/students/me/photo", {
+          method: "PATCH",
+          body: JSON.stringify({ photo: dataUrl }),
+        });
+        setStudent((prev: any) => ({ ...prev, profile_photo: dataUrl }));
+        toast.success("Photo updated!");
+      } catch (err: any) {
+        toast.error(err.message || "Upload failed");
+      } finally {
+        setUploadingPhoto(false);
+      }
+    };
+  }
 
   if (!student) return (
     <div className="flex items-center justify-center h-64">
@@ -64,9 +101,31 @@ export default function Students() {
         className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl shadow-blue-500/20"
       >
         <div className="flex items-center gap-5">
-          <div className="w-20 h-20 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center text-3xl font-black flex-shrink-0 border border-white/30">
-            {initials}
+          {/* Avatar with upload */}
+          <div className="relative flex-shrink-0">
+            <div className="w-20 h-20 rounded-2xl border-2 border-white/30 overflow-hidden bg-white/20 backdrop-blur flex items-center justify-center">
+              {student.profile_photo ? (
+                <img src={student.profile_photo} alt={fullName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-3xl font-black text-white">{initials}</span>
+              )}
+            </div>
+            {/* Upload button overlay */}
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploadingPhoto}
+              className="absolute -bottom-1 -right-1 w-7 h-7 bg-white text-blue-600 rounded-xl flex items-center justify-center shadow-lg hover:bg-blue-50 transition"
+              title="Change photo"
+            >
+              {uploadingPhoto ? (
+                <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Camera size={13} />
+              )}
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </div>
+
           <div>
             <p className="text-blue-200 text-xs font-semibold uppercase tracking-widest mb-1">Student Profile</p>
             <h1 className="text-2xl font-black">{fullName}</h1>
@@ -111,9 +170,9 @@ export default function Students() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
         <Section title="Academic Details">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-            <InfoRow icon={GraduationCap} label="Program"        value="Master of Technology" />
-            <InfoRow icon={BookOpen}      label="Specialization" value="Computer Science & Engineering" />
-            <InfoRow icon={Hash}          label="Roll Number"    value={student.roll_number} />
+            <InfoRow icon={GraduationCap} label="Program"         value="Master of Technology" />
+            <InfoRow icon={BookOpen}      label="Specialization"  value="Computer Science & Engineering" />
+            <InfoRow icon={Hash}          label="Roll Number"     value={student.roll_number} />
             <InfoRow icon={User}          label="Faculty Advisor" value="Prof. Ashish Tiwari" />
           </div>
         </Section>
@@ -123,10 +182,10 @@ export default function Students() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <Section title="Address Details">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-            <InfoRow icon={MapPin} label="City"    value={student.city} />
-            <InfoRow icon={MapPin} label="State"   value={student.state} />
+            <InfoRow icon={MapPin} label="City"     value={student.city} />
+            <InfoRow icon={MapPin} label="State"    value={student.state} />
             <InfoRow icon={Hash}   label="PIN Code" value={student.pin} />
-            <InfoRow icon={MapPin} label="Address" value={student.address} />
+            <InfoRow icon={MapPin} label="Address"  value={student.address} />
           </div>
         </Section>
       </motion.div>

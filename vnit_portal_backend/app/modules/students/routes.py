@@ -8,55 +8,73 @@ router = APIRouter(prefix="/students", tags=["Students"])
 @router.get("/me")
 def get_my_profile(current_user: dict = Depends(get_current_user)):
     conn = get_connection()
-    cur = conn.cursor()
-
+    cur  = conn.cursor()
     try:
         cur.execute("""
-            SELECT
-                student_id,
-                first_name, middle_name, last_name,
-                father_name, mother_name,
-                email, mobile, dob,
-                gender, category,
-                state, city, pin, address,
-                aadhaar, blood_group,
-                program_type_id, program_id, program_title_id,
-                branch_id, advisor_id, roll_number
+            SELECT student_id,
+                   first_name, middle_name, last_name,
+                   father_name, mother_name,
+                   email, mobile, dob,
+                   gender, category,
+                   state, city, pin, address,
+                   aadhaar, blood_group,
+                   program_type_id, program_id, program_title_id,
+                   branch_id, advisor_id, roll_number,
+                   profile_photo
             FROM students
             WHERE user_id = %s
         """, (current_user["user_id"],))
-
         row = cur.fetchone()
-
         if not row:
             raise HTTPException(status_code=404, detail="Student not found")
-
         return {
-            "student_id": row[0],
-            "first_name": row[1],
-            "middle_name": row[2],
-            "last_name": row[3],
-            "father_name": row[4],
-            "mother_name": row[5],
-            "email": row[6],
-            "mobile": row[7],
-            "dob": str(row[8]) if row[8] else None,
-            "gender": row[9],
-            "category": row[10],
-            "state": row[11],
-            "city": row[12],
-            "pin": row[13],
-            "address": row[14],
-            "aadhaar": row[15],
-            "blood_group": row[16],
-            "program_type_id": row[17],
-            "program_id": row[18],
+            "student_id":       row[0],
+            "first_name":       row[1],
+            "middle_name":      row[2],
+            "last_name":        row[3],
+            "father_name":      row[4],
+            "mother_name":      row[5],
+            "email":            row[6],
+            "mobile":           row[7],
+            "dob":              str(row[8]) if row[8] else None,
+            "gender":           row[9],
+            "category":         row[10],
+            "state":            row[11],
+            "city":             row[12],
+            "pin":              row[13],
+            "address":          row[14],
+            "aadhaar":          row[15],
+            "blood_group":      row[16],
+            "program_type_id":  row[17],
+            "program_id":       row[18],
             "program_title_id": row[19],
-            "branch_id": row[20],
-            "advisor_id": row[21],
-            "roll_number": row[22],
+            "branch_id":        row[20],
+            "advisor_id":       row[21],
+            "roll_number":      row[22],
+            "profile_photo":    row[23],
         }
+    finally:
+        cur.close()
+        release_connection(conn)
 
+
+@router.patch("/me/photo")
+def update_photo(data: dict, current_user: dict = Depends(get_current_user)):
+    photo = (data.get("photo") or "").strip()
+    if not photo:
+        raise HTTPException(400, "No photo data provided")
+    # Limit size — base64 of a 200x200 JPEG is ~15–30KB of text
+    if len(photo) > 200_000:
+        raise HTTPException(400, "Photo too large. Max ~150KB image please.")
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        cur.execute(
+            "UPDATE students SET profile_photo = %s WHERE user_id = %s",
+            (photo, current_user["user_id"]),
+        )
+        conn.commit()
+        return {"message": "Photo updated"}
     finally:
         cur.close()
         release_connection(conn)
@@ -65,29 +83,23 @@ def get_my_profile(current_user: dict = Depends(get_current_user)):
 @router.get("/{student_id}")
 def get_student(student_id: int, user=Depends(get_current_user)):
     conn = get_connection()
-    cur = conn.cursor()
-
+    cur  = conn.cursor()
     try:
         cur.execute("""
             SELECT student_id, first_name, middle_name, last_name, email, mobile
-            FROM students
-            WHERE student_id = %s
+            FROM students WHERE student_id = %s
         """, (student_id,))
-
         row = cur.fetchone()
-
         if not row:
             raise HTTPException(status_code=404, detail="Student not found")
-
         return {
-            "student_id": row[0],
-            "first_name": row[1],
+            "student_id":  row[0],
+            "first_name":  row[1],
             "middle_name": row[2],
-            "last_name": row[3],
-            "email": row[4],
-            "mobile": row[5],
+            "last_name":   row[3],
+            "email":       row[4],
+            "mobile":      row[5],
         }
-
     finally:
         cur.close()
         release_connection(conn)
